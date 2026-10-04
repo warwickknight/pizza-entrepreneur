@@ -171,6 +171,10 @@ const popupZones = [hireChefZone, hireServerZone, buyTableZone, supplyZone, rest
 function updateZonePopupVisibility(playerPos) {
   popupZones.forEach(z => {
     if (z && z.sprite && z.popupOnStep) {
+      if (z.group && !z.group.visible) {
+        z.sprite.visible = false;
+        return;
+      }
       const dist = playerPos.distanceTo(z.group.position);
       z.sprite.visible = dist < 2.0;
     }
@@ -379,11 +383,12 @@ function isServerWorkingToday() {
 }
 
 function applyHiredChef() {
+  if (state.chefHired) {
+    hireChefZone.group.visible = false;
+    if (hireChefZone.sprite) hireChefZone.sprite.visible = false;
+  }
   const working = isChefWorkingToday();
   if (working) {
-    updateZoneText(hireChefZone, "CHEF ON SHIFT", "Auto Baking");
-    hireChefZone.ring.material.color.setHex(0x581c87);
-
     if (!hiredChef) {
       hiredChef = createChibiHuman(gameScene.scene, 0xffffff, 'chef');
       hiredChef.root.position.set(-2.5, 0, -3.2);
@@ -394,19 +399,16 @@ function applyHiredChef() {
   } else {
     // Scheduled off today on rota!
     if (hiredChef) hiredChef.root.visible = false;
-    if (state.chefHired) {
-      updateZoneText(hireChefZone, "CHEF DAY OFF", "Unscheduled on Rota");
-      hireChefZone.ring.material.color.setHex(0x3b0764);
-    }
   }
 }
 
 function applyHiredServer() {
+  if (state.serverHired) {
+    hireServerZone.group.visible = false;
+    if (hireServerZone.sprite) hireServerZone.sprite.visible = false;
+  }
   const working = isServerWorkingToday();
   if (working) {
-    updateZoneText(hireServerZone, "SERVER ON SHIFT", "Auto Serving");
-    hireServerZone.ring.material.color.setHex(0x831843);
-
     if (!hiredServer) {
       hiredServer = createChibiHuman(gameScene.scene, 0xdc2626, 'cap');
       hiredServer.root.position.set(0, 0, 1.8);
@@ -418,10 +420,6 @@ function applyHiredServer() {
   } else {
     // Scheduled off today on rota!
     if (hiredServer) hiredServer.root.visible = false;
-    if (state.serverHired) {
-      updateZoneText(hireServerZone, "SERVER DAY OFF", "Unscheduled on Rota");
-      hireServerZone.ring.material.color.setHex(0x500724);
-    }
   }
 }
 
@@ -749,7 +747,7 @@ function animate(now) {
   }
 
   // UPGRADE: HIRE CHEF ($45)
-  const distToHireChef = pPos.distanceTo(hireChefZone.group.position);
+  const distToHireChef = (!state.chefHired && hireChefZone) ? pPos.distanceTo(hireChefZone.group.position) : 999;
   if (!state.chefHired && distToHireChef < 1.4) {
     if (state.cash >= 45) {
       state.actionProgress += dt / 1.2;
@@ -771,7 +769,7 @@ function animate(now) {
   }
 
   // UPGRADE: HIRE SERVER ($60)
-  const distToHireServer = pPos.distanceTo(hireServerZone.group.position);
+  const distToHireServer = (!state.serverHired && hireServerZone) ? pPos.distanceTo(hireServerZone.group.position) : 999;
   if (!state.serverHired && distToHireServer < 1.4) {
     if (state.cash >= 60) {
       state.actionProgress += dt / 1.2;
@@ -793,8 +791,8 @@ function animate(now) {
   }
 
   // UPGRADE: BUY DINING TABLE (Up to 4 tables)
+  const distToBuyTable = (state.tablesCount < 4 && buyTableZone) ? pPos.distanceTo(buyTableZone.group.position) : 999;
   if (state.tablesCount < 4) {
-    const distToBuyTable = pPos.distanceTo(buyTableZone.group.position);
     const currentCost = TABLE_COSTS[state.tablesCount];
     if (distToBuyTable < 1.4) {
       if (state.cash >= currentCost) {

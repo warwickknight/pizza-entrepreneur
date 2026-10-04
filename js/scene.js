@@ -346,19 +346,6 @@ class GameScene {
       tableGroup.add(chair);
     });
 
-    // Striped Terrace Umbrella Canopy
-    const umbrellaPole = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.2, 8), metalMat);
-    umbrellaPole.position.y = 1.6;
-    tableGroup.add(umbrellaPole);
-
-    const canopy = new THREE.Mesh(
-      new THREE.ConeGeometry(1.8, 0.7, 8),
-      new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.5 })
-    );
-    canopy.position.y = 3.3;
-    canopy.castShadow = true;
-    tableGroup.add(canopy);
-
     // Refreshing Iced Drink on Table
     const glassMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75, roughness: 0.1 });
     const glass = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.35, 12), glassMat);

@@ -288,11 +288,18 @@ class Customer {
         this.char.head.rotation.x = 0;
         this.bubble.className = 'world-bubble bubble-done';
         this.bubble.innerHTML = '😋';
-        window.tableOccupied = false; // Free up table for next dine-in guest!
+        window.tableOccupied = false; // Seat is free again, but the table is left messy
+        if (window.onTableMess) window.onTableMess();
       }
     } else if (this.state === 'leaving') {
       const exitDest = new THREE.Vector3(14, 0, 7.5);
       this.moveTowards(exitDest, 3.8, dt);
+
+      // Takeaway customers sometimes drop litter on the way out
+      if (!this.dineIn && !this.stormed && !this.litterChecked && this.char.root.position.x > 1.5) {
+        this.litterChecked = true;
+        if (Math.random() < 0.5 && window.spawnLitter) window.spawnLitter(this.char.root.position);
+      }
       if (!this.stormed && this.bubble.className !== 'world-bubble bubble-done') {
         this.bubble.className = 'world-bubble bubble-done';
         this.bubble.innerHTML = '😋';

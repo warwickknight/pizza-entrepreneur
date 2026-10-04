@@ -179,6 +179,85 @@ const physicalAtm = gameScene.createBankAtmProp();
 
 let diningTableMesh = null;
 window.tableOccupied = false;
+window.tableDirty = false;
+
+// --- Rubbish: dirty dining table + litter dropped by takeaway customers. Walk over it to clean up. ---
+const TABLE_POS = new THREE.Vector3(5.5, 0, -0.8);
+const litterItems = [];
+let tableMess = null;
+
+function buildTableMess() {
+  tableMess = new THREE.Group();
+  const plateMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 });
+  const crustMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.8 });
+  const cupMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.5 });
+  const napkinMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.9 });
+
+  [[-0.55, 0.3], [0.1, -0.55]].forEach(([x, z]) => {
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.3, 0.04, 16), plateMat);
+    plate.position.set(x, 1.19, z);
+    tableMess.add(plate);
+    const crust = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.05, 0.1), crustMat);
+    crust.position.set(x + 0.05, 1.24, z);
+    crust.rotation.y = x * 3;
+    tableMess.add(crust);
+  });
+  const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.07, 0.22, 10), cupMat);
+  cup.position.set(0.65, 1.27, -0.2);
+  cup.rotation.z = 1.2; // knocked over
+  tableMess.add(cup);
+  [[0.45, 0.45], [-0.1, 0.75]].forEach(([x, z]) => {
+    const ball = new THREE.Mesh(new THREE.IcosahedronGeometry(0.1, 0), napkinMat);
+    ball.position.set(x, 1.24, z);
+    tableMess.add(ball);
+  });
+  tableMess.position.copy(TABLE_POS);
+  tableMess.position.y = 0;
+  gameScene.scene.add(tableMess);
+}
+
+window.onTableMess = function() {
+  if (!tableMess) buildTableMess();
+  tableMess.visible = true;
+  window.tableDirty = true;
+};
+
+window.spawnLitter = function(pos) {
+  if (litterItems.length >= 8) return;
+  const kind = Math.floor(Math.random() * 3);
+  let mesh;
+  if (kind === 0) {
+    mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(0.14, 0), new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.9 })); // crumpled paper
+  } else if (kind === 1) {
+    mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.07, 0.24, 10), new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.5 })); // dropped cup
+    mesh.rotation.z = 1.4;
+  } else {
+    mesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.05, 0.4), new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.6 })); // flat box
+    mesh.rotation.y = Math.random() * 3;
+  }
+  mesh.position.set(pos.x + (Math.random() - 0.5) * 0.6, 0.32, Math.min(pos.z, 6.0) + (Math.random() - 0.5) * 0.4);
+  mesh.castShadow = true;
+  gameScene.scene.add(mesh);
+  litterItems.push(mesh);
+};
+
+function updateRubbish(playerPos) {
+  if (window.tableDirty && tableMess && playerPos.distanceTo(TABLE_POS) < 1.9) {
+    tableMess.visible = false;
+    window.tableDirty = false;
+    window.audio.pop();
+    showFloatingText(TABLE_POS, "✨ Table Cleaned!", "#38bdf8");
+  }
+  for (let i = litterItems.length - 1; i >= 0; i--) {
+    const m = litterItems[i];
+    if (Math.hypot(playerPos.x - m.position.x, playerPos.z - m.position.z) < 0.9) {
+      gameScene.scene.remove(m);
+      litterItems.splice(i, 1);
+      window.audio.pop();
+      showFloatingText(m.position, "🧹 Tidied!", "#a7f3d0");
+    }
+  }
+}
 
 function applyPurchasedTable() {
   updateZoneText(buyTableZone, "TERRACE DINING", "Open For Seating");
@@ -501,6 +580,7 @@ function animate(now) {
 
   // Dynamic zone popup update on step
   updateZonePopupVisibility(player.root.position);
+  updateRubbish(player.root.position);
 
   // 2. Interactive Workstation Step-on Triggers
   const pPos = player.root.position;
@@ -577,7 +657,7 @@ function animate(now) {
     frontCust.remainingPies--;
 
     if (frontCust.remainingPies <= 0) {
-      const willDineIn = state.tablePurchased && !window.tableOccupied;
+      const willDineIn = state.tablePurchased && !window.tableOccupied && !window.tableDirty;
       frontCust.dineIn = willDineIn;
 
       const isCard = Math.random() > 0.3;
@@ -844,7 +924,7 @@ function animate(now) {
           currentFront.remainingPies--;
 
           if (currentFront.remainingPies <= 0) {
-            const willDineIn = state.tablePurchased && !window.tableOccupied;
+            const willDineIn = state.tablePurchased && !window.tableOccupied && !window.tableDirty;
             currentFront.dineIn = willDineIn;
 
             const isCard = Math.random() > 0.3;

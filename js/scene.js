@@ -783,7 +783,7 @@ class GameScene {
     });
 
     // Animate falling rain streaks if rainy or storm
-    if (this.isRaining && this.rainParticles) {
+    if (this.isRaining && this.rainLines && this.rainGeometry) {
       const positions = this.rainGeometry.attributes.position.array;
       const count = this.rainCount;
       const rainSpeed = this.weatherType === 'storm' ? 24 : 16;

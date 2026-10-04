@@ -583,7 +583,21 @@ function animate(now) {
     { minX: -9.0, maxX: -7.0, minZ: -3.0, maxZ: -1.0 },
     // Low back wall
     { minX: -10, maxX: 10, minZ: -8.5, maxZ: -7.1 },
+    // Park Rest Bench on Lawn: x: 13.0, z: 4.8
+    { minX: 11.9, maxX: 14.1, minZ: 4.3, maxZ: 5.3 },
   ];
+
+  // Dynamically add collision for purchased garden dining tables
+  const activeTableCount = state.tablesCount || (state.tablePurchased ? 1 : 0);
+  for (let i = 0; i < activeTableCount; i++) {
+    const slot = TABLE_SLOTS[i];
+    if (slot) {
+      OBSTACLES.push({
+        minX: slot.x - 0.85, maxX: slot.x + 0.85,
+        minZ: slot.z - 0.85, maxZ: slot.z + 0.85
+      });
+    }
+  }
 
   // Resolve player collision against solid obstacles
   const playerRadius = 0.42;

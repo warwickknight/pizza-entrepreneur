@@ -749,6 +749,11 @@ const departingCustomers = [];
 window.departingCustomers = departingCustomers;
 
 function spawnCustomer() {
+  const isRaining = state.currentWeather === 'rainy' || state.currentWeather === 'storm';
+  if (isRaining && Math.random() < 0.80) {
+    // Rain keeps pedestrians indoors at home
+    return;
+  }
   if (customers.length < 4) {
     customers.push(new Customer(customers.length, gameScene, bubbleContainer));
   }

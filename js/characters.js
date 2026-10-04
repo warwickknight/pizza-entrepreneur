@@ -232,6 +232,34 @@ class Customer {
       }
     }
 
+    // Weather check: when it rains, customers outdoors run home!
+    const isRaining = window.state && (window.state.currentWeather === 'rainy' || window.state.currentWeather === 'storm');
+    if (isRaining && this.state !== 'leaving') {
+      if (this.state === 'walk_to_table' || this.state === 'eating_at_table') {
+        if (this.diningPizza && window.removeTablePizza) {
+          window.removeTablePizza(this.diningPizza);
+          this.diningPizza = null;
+        }
+        if (this.tableSlot) {
+          this.tableSlot.occupied = false;
+          if (window.onTableMess) window.onTableMess(this.tableSlot);
+        }
+        this.state = 'leaving';
+        this.fleeingRain = true;
+        this.bubble.className = 'world-bubble bubble-angry';
+        this.bubble.innerHTML = '🌧️🏃';
+        window.departingCustomers && window.departingCustomers.push(this);
+        return false;
+      } else if (this.state === 'walk_to_counter' || this.state === 'waiting_order') {
+        this.state = 'leaving';
+        this.fleeingRain = true;
+        this.bubble.className = 'world-bubble bubble-angry';
+        this.bubble.innerHTML = '🌧️🏠';
+        window.departingCustomers && window.departingCustomers.push(this);
+        return false;
+      }
+    }
+
     if (this.state === 'walk_to_counter') {
       const dest = new THREE.Vector3(0, 0, queueSlotZ);
       this.moveTowards(dest, this.speed, dt);
@@ -309,14 +337,21 @@ class Customer {
       }
     } else if (this.state === 'leaving') {
       const exitDest = new THREE.Vector3(18.5, 0, 7.5);
-      this.moveTowards(exitDest, 3.8, dt);
+      const leaveSpeed = this.fleeingRain ? 5.8 : 3.8;
+      this.moveTowards(exitDest, leaveSpeed, dt);
+
+      if (this.fleeingRain) {
+        // Running in the rain: hands shielding head
+        this.char.leftArm.rotation.x = -1.6;
+        this.char.rightArm.rotation.x = -1.6;
+      }
 
       // Takeaway customers sometimes drop litter on the way out
-      if (!this.dineIn && !this.stormed && !this.litterChecked && this.char.root.position.x > 1.5) {
+      if (!this.dineIn && !this.stormed && !this.fleeingRain && !this.litterChecked && this.char.root.position.x > 1.5) {
         this.litterChecked = true;
         if (Math.random() < 0.5 && window.spawnLitter) window.spawnLitter(this.char.root.position);
       }
-      if (!this.stormed && this.bubble.className !== 'world-bubble bubble-done') {
+      if (!this.stormed && !this.fleeingRain && this.bubble.className !== 'world-bubble bubble-done') {
         this.bubble.className = 'world-bubble bubble-done';
         this.bubble.innerHTML = '😋';
       }

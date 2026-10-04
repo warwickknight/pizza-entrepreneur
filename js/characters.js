@@ -271,15 +271,23 @@ class Customer {
       this.moveTowards(tableChairPos, 3.2, dt);
       if (this.char.root.position.distanceTo(tableChairPos) < 0.25) {
         this.state = 'eating_at_table';
-        this.eatTimer = 7.0; // 7 seconds eating duration
+        this.eatDuration = 6.0;
+        this.eatTimer = this.eatDuration;
         this.bubble.className = 'world-bubble bubble-done';
-        this.bubble.innerHTML = '🥤';
+        this.bubble.innerHTML = '🍕';
         this.char.root.rotation.y = Math.PI / 2; // Face the dining table
         this.char.leftArm.rotation.x = -0.7;
         this.char.rightArm.rotation.x = -0.7;
+        if (window.spawnTablePizza && this.tableSlot) {
+          this.diningPizza = window.spawnTablePizza(this.tableSlot);
+        }
       }
     } else if (this.state === 'eating_at_table') {
       this.eatTimer -= dt;
+      const progress = Math.max(0, Math.min(1, 1 - (this.eatTimer / (this.eatDuration || 6.0))));
+      if (this.diningPizza && window.updateTablePizzaSlices) {
+        window.updateTablePizzaSlices(this.diningPizza, progress);
+      }
       // Gentle eating animation (head bob & munching)
       this.char.head.rotation.x = Math.sin(this.walkCycle * 0.8) * 0.12;
       this.char.leftArm.rotation.x = -0.7 + Math.sin(this.walkCycle * 0.6) * 0.15;
@@ -290,6 +298,10 @@ class Customer {
         this.char.head.rotation.x = 0;
         this.bubble.className = 'world-bubble bubble-done';
         this.bubble.innerHTML = '😋';
+        if (this.diningPizza && window.removeTablePizza) {
+          window.removeTablePizza(this.diningPizza);
+          this.diningPizza = null;
+        }
         if (this.tableSlot) {
           this.tableSlot.occupied = false;
           if (window.onTableMess) window.onTableMess(this.tableSlot);
@@ -404,6 +416,10 @@ class Customer {
     if (this.bubble && this.bubble.parentNode) this.bubble.parentNode.removeChild(this.bubble);
     this.gameScene.scene.remove(this.char.root);
     if (this.child) this.gameScene.scene.remove(this.child.root);
+    if (this.diningPizza && window.removeTablePizza) {
+      window.removeTablePizza(this.diningPizza);
+      this.diningPizza = null;
+    }
     if (this.tableSlot) {
       this.tableSlot.occupied = false;
     }

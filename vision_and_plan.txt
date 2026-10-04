@@ -141,22 +141,22 @@ Stall Polish    Labor Rota,     Supply Chain    Work-Life       Tactile Immersio
 
 ### 4. Active Feature Backlog & Immediate To-Do List
 
-#### Tactical Immersion & Quality of Life (Current Priority)
-* [ ] **Hide Staff Hiring Circles Once Hired:** Remove or hide the hiring footprint circles for Chef and Server once they are hired so the kitchen patio floor stays clean and uncluttered.
-* [ ] **Table Collisions:** Add solid bounding box obstacle entries for all purchased garden dining tables so the player and NPCs cannot walk directly through the table meshes.
-* [ ] **Animated Rain Drops:** Make rain line particles move downward dynamically with gravity and loop during rainy/storm weather, rather than remaining static.
-* [ ] **Rubbish Bin Prop & Disposal Mechanic:**
-  * Place a physical outdoor rubbish bin / trash can near the garden lawn.
-  * When cleaning tables or street litter, player collects rubbish bags/wrappers and drops them into the bin.
-* [ ] **Visual Table Dining (Pizza Slices Disappearing):**
-  * When customers sit at tables, display an open pizza box or wooden serving board on the table.
-  * Animate pizza slices disappearing one by one as they eat, finishing with the empty box/cup becoming rubbish.
-* [ ] **Hireable Cleaner NPC:**
-  * Add upgrade pad to hire a dedicated Cleaner staff member ($50 hire, $20/day wage).
-  * Cleaner automatically sweeps litter, walks to dirty tables, wipes them down, and empties rubbish into the bin.
-* [ ] **Assistant Manager Hire (Automated Restocking):**
-  * Unlockable senior hire ($90 hire, $35/day wage).
-  * Automatically monitors flour, sauce, and cheese levels and orders restock pallets when supplies drop low.
+#### Tactical Immersion & Quality of Life (Completed)
+* [x] **Hide Staff Hiring Circles Once Hired:** Staff hiring rings and step labels hide immediately once hired, keeping the kitchen patio and floor clean.
+* [x] **Table & Bench Collisions:** Solid bounding box obstacle entries for all purchased garden dining tables and park bench prevent walking through them.
+* [x] **Animated Rain Drops:** Rain lines fall downwards dynamically with gravity and storm acceleration, looping continuously.
+* [x] **Rubbish Bin Prop & Disposal Mechanic:**
+  * Physical outdoor hooded rubbish bin placed near the garden walkway with solid collision.
+  * Collecting dirty tables or street litter equips the player with a visual trash bag; walking to the bin dumps it with audio and gives a +$1.50 cleanup bonus.
+* [x] **Visual Table Dining (Pizza Slices Disappearing):**
+  * When customers sit at tables, a wooden serving board with a fresh 4-slice pizza appears.
+  * As the dining timer runs, slices disappear one by one at 25%, 50%, 75%, and 100% with eating sounds, leaving behind crumbs and rubbish mess.
+* [x] **Hireable Cleaner NPC:**
+  * Upgrade pad to hire a dedicated Cleaner staff member ($50 hire). Pad hides once hired.
+  * Cleaner automatically searches for dirty dining tables and ground litter, sweeps them clean, and dumps trash into the rubbish bin.
+* [x] **Assistant Manager Hire (Automated Restocking):**
+  * Senior hire ($90 hire). Pad hides once hired.
+  * Monitors dough, sauce, and cheese levels and auto-orders restock supplies when inventory drops below 4 units.
 
 #### Phase 5 & 6: Venue Scaling, Fleet & Production Deployment
 

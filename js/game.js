@@ -165,9 +165,15 @@ restZone.group.position.set(13.0, 0, 4.8);
 const bankZone = createGroundZoneRing(gameScene.scene, 1.3, 0x14b8a6, "BANK ATM", "Loans & Debt 🏦", { popupOnStep: true });
 bankZone.group.position.set(-6.5, 0, 1.8);
 
+// New Hires: Cleaner & Assistant Manager
+const hireCleanerZone = createGroundZoneRing(gameScene.scene, 1.4, 0x14b8a6, "HIRE CLEANER", "$50 · Auto Clean 🧹", { popupOnStep: true });
+hireCleanerZone.group.position.set(8.2, 0, 1.2);
 
-const allGroundZones = [zoneOrder, zoneCook, zonePickup, hireChefZone, hireServerZone, buyTableZone, supplyZone, restZone, bankZone];
-const popupZones = [hireChefZone, hireServerZone, buyTableZone, supplyZone, restZone, bankZone];
+const hireManagerZone = createGroundZoneRing(gameScene.scene, 1.4, 0x6366f1, "HIRE MANAGER", "$90 · Auto Stock 📋", { popupOnStep: true });
+hireManagerZone.group.position.set(-3.8, 0, -5.5);
+
+const allGroundZones = [zoneOrder, zoneCook, zonePickup, hireChefZone, hireServerZone, buyTableZone, supplyZone, restZone, bankZone, hireCleanerZone, hireManagerZone];
+const popupZones = [hireChefZone, hireServerZone, buyTableZone, supplyZone, restZone, bankZone, hireCleanerZone, hireManagerZone];
 function updateZonePopupVisibility(playerPos) {
   popupZones.forEach(z => {
     if (z && z.sprite && z.popupOnStep) {
@@ -187,6 +193,37 @@ const physicalChalkboard = gameScene.createChalkboardProp();
 const physicalPallet = gameScene.createSupplyPalletMeshes(); // Supply box table at (-8.0, 0.12, -2.0)
 const physicalGrassBench = gameScene.createOutdoorGrassBenchMesh(); // Out on the lawn at (13.0, 0.02, 4.8)
 const physicalAtm = gameScene.createBankAtmProp();
+const physicalRubbishBin = gameScene.createRubbishBinMesh(9.4, 3.2);
+
+// Visual Pizza Slices on Dining Tables
+window.spawnTablePizza = function(slot) {
+  if (!slot) return null;
+  const platter = gameScene.createDiningPlatterMesh();
+  platter.position.set(slot.x - 0.15, 0, slot.z);
+  gameScene.scene.add(platter);
+  return platter;
+};
+
+window.updateTablePizzaSlices = function(platter, progress) {
+  if (!platter || !platter.slices) return;
+  const thresholds = [0.25, 0.50, 0.75, 0.96];
+  for (let i = 0; i < platter.slices.length; i++) {
+    const slice = platter.slices[i];
+    if (progress >= thresholds[i]) {
+      if (slice.visible) {
+        slice.visible = false;
+        window.audio.pop();
+      }
+    } else {
+      slice.visible = true;
+    }
+  }
+};
+
+window.removeTablePizza = function(platter) {
+  if (!platter) return;
+  gameScene.scene.remove(platter);
+};
 
 function getAvailableTableSlot() {
   const count = state.tablesCount || (state.tablePurchased ? 1 : 0);
@@ -263,14 +300,40 @@ window.spawnLitter = function(pos) {
   litterItems.push(mesh);
 };
 
+let playerCarryingTrash = 0;
+let playerTrashMesh = null;
+
+function updatePlayerTrashVisual() {
+  if (playerCarryingTrash > 0 && !playerTrashMesh) {
+    playerTrashMesh = new THREE.Group();
+    const bagMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.9 });
+    const bag = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2, 1), bagMat);
+    bag.scale.set(1, 1.2, 0.9);
+    playerTrashMesh.add(bag);
+
+    const miniCup = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.06, 0.18, 8), new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.5 }));
+    miniCup.position.set(0.12, 0.15, 0.05);
+    miniCup.rotation.z = 0.5;
+    playerTrashMesh.add(miniCup);
+
+    playerTrashMesh.position.set(-0.45, 0.7, 0.2);
+    player.root.add(playerTrashMesh);
+  } else if (playerCarryingTrash === 0 && playerTrashMesh) {
+    player.root.remove(playerTrashMesh);
+    playerTrashMesh = null;
+  }
+}
+
 function updateRubbish(playerPos) {
   TABLE_SLOTS.forEach(slot => {
     if (slot.dirty && slot.messMesh && slot.messMesh.visible) {
       if (Math.hypot(playerPos.x - slot.x, playerPos.z - slot.z) < 2.0) {
         slot.messMesh.visible = false;
         slot.dirty = false;
+        playerCarryingTrash++;
+        updatePlayerTrashVisual();
         window.audio.pop();
-        showFloatingText(new THREE.Vector3(slot.x, 0, slot.z), "✨ Table Cleaned!", "#38bdf8");
+        showFloatingText(new THREE.Vector3(slot.x, 0, slot.z), "🗑️ Picked up Mess! Bring to Bin ♻️", "#38bdf8");
       }
     }
   });
@@ -279,9 +342,22 @@ function updateRubbish(playerPos) {
     if (Math.hypot(playerPos.x - m.position.x, playerPos.z - m.position.z) < 0.9) {
       gameScene.scene.remove(m);
       litterItems.splice(i, 1);
+      playerCarryingTrash++;
+      updatePlayerTrashVisual();
       window.audio.pop();
-      showFloatingText(m.position, "🧹 Tidied!", "#a7f3d0");
+      showFloatingText(m.position, "🗑️ Litter Picked Up! Bring to Bin ♻️", "#a7f3d0");
     }
+  }
+
+  // Outdoor Rubbish Bin Disposal (x: 9.4, z: 3.2)
+  const distToBin = Math.hypot(playerPos.x - 9.4, playerPos.z - 3.2);
+  if (distToBin < 1.4 && playerCarryingTrash > 0) {
+    const tip = playerCarryingTrash * 1.50;
+    state.cash += tip;
+    window.audio.cashRegister();
+    showFloatingText(new THREE.Vector3(9.4, 1.2, 3.2), `+$${tip.toFixed(2)} Clean Up Tip! ♻️`, "#10b981");
+    playerCarryingTrash = 0;
+    updatePlayerTrashVisual();
   }
 }
 
@@ -442,6 +518,78 @@ function hireServer() {
   applyHiredServer();
 }
 
+// 3B. Cleaner & Assistant Manager Staff
+let hiredCleaner = null;
+let hiredManager = null;
+
+function isCleanerWorkingToday() {
+  return state.cleanerHired && (state.cleanerRota ? state.cleanerRota[state.dayIndex] : true);
+}
+
+function isManagerWorkingToday() {
+  return state.managerHired && (state.managerRota ? state.managerRota[state.dayIndex] : true);
+}
+
+function applyHiredCleaner() {
+  if (state.cleanerHired) {
+    hireCleanerZone.group.visible = false;
+    if (hireCleanerZone.sprite) hireCleanerZone.sprite.visible = false;
+  }
+  const working = isCleanerWorkingToday();
+  if (working) {
+    if (!hiredCleaner) {
+      hiredCleaner = createChibiHuman(gameScene.scene, 0x0d9488, 'cap');
+      hiredCleaner.root.position.set(9.4, 0, 2.2);
+      hiredCleaner.state = 'idle';
+      hiredCleaner.cleanTimer = 0;
+      hiredCleaner.targetSlot = null;
+      hiredCleaner.targetLitter = null;
+    } else {
+      hiredCleaner.root.visible = true;
+    }
+  } else {
+    if (hiredCleaner) hiredCleaner.root.visible = false;
+  }
+}
+
+function applyHiredManager() {
+  if (state.managerHired) {
+    hireManagerZone.group.visible = false;
+    if (hireManagerZone.sprite) hireManagerZone.sprite.visible = false;
+  }
+  const working = isManagerWorkingToday();
+  if (working) {
+    if (!hiredManager) {
+      hiredManager = createChibiHuman(gameScene.scene, 0x312e81, 'cap');
+      hiredManager.root.position.set(-3.8, 0, -5.5);
+      hiredManager.checkTimer = 0;
+    } else {
+      hiredManager.root.visible = true;
+    }
+  } else {
+    if (hiredManager) hiredManager.root.visible = false;
+  }
+}
+
+if (state.cleanerHired) applyHiredCleaner();
+if (state.managerHired) applyHiredManager();
+
+function hireCleaner() {
+  state.cleanerHired = true;
+  gameState.save();
+  window.audio.upgradeFanfare();
+  showFloatingText(hireCleanerZone.group.position, "CLEANER HIRED!", "#14b8a6");
+  applyHiredCleaner();
+}
+
+function hireManager() {
+  state.managerHired = true;
+  gameState.save();
+  window.audio.upgradeFanfare();
+  showFloatingText(hireManagerZone.group.position, "ASSISTANT MANAGER HIRED!", "#6366f1");
+  applyHiredManager();
+}
+
 // 4. UI Elements & Action Ring
 const actionRing = document.getElementById('action-ring');
 const ringProgress = document.getElementById('ring-progress');
@@ -585,6 +733,8 @@ function animate(now) {
     { minX: -10, maxX: 10, minZ: -8.5, maxZ: -7.1 },
     // Park Rest Bench on Lawn: x: 13.0, z: 4.8
     { minX: 11.9, maxX: 14.1, minZ: 4.3, maxZ: 5.3 },
+    // Outdoor Rubbish Bin: x: 9.4, z: 3.2
+    { minX: 8.9, maxX: 9.9, minZ: 2.7, maxZ: 3.7 },
   ];
 
   // Dynamically add collision for purchased garden dining tables
@@ -882,8 +1032,54 @@ function animate(now) {
     window.audio.pop();
   }
 
+  // UPGRADE: HIRE CLEANER ($50)
+  const distToHireCleaner = (!state.cleanerHired && hireCleanerZone) ? pPos.distanceTo(hireCleanerZone.group.position) : 999;
+  if (!state.cleanerHired && distToHireCleaner < 1.4) {
+    if (state.cash >= 50) {
+      state.actionProgress += dt / 1.2;
+      updateActionRing(state.actionProgress, pPos);
+      if (state.actionProgress >= 1) {
+        state.actionProgress = 0;
+        updateActionRing(0, pPos);
+        state.cash -= 50;
+        hireCleaner();
+      }
+    } else {
+      updateActionRing(0, pPos);
+      if (chefWarnCooldown <= 0) {
+        const needed = (50 - state.cash).toFixed(2);
+        showFloatingText(hireCleanerZone.group.position, `Need $${needed} more!`, "#ef4444");
+        window.audio.warningBuzz();
+        chefWarnCooldown = 2.5;
+      }
+    }
+  }
+
+  // UPGRADE: HIRE ASSISTANT MANAGER ($90)
+  const distToHireManager = (!state.managerHired && hireManagerZone) ? pPos.distanceTo(hireManagerZone.group.position) : 999;
+  if (!state.managerHired && distToHireManager < 1.4) {
+    if (state.cash >= 90) {
+      state.actionProgress += dt / 1.2;
+      updateActionRing(state.actionProgress, pPos);
+      if (state.actionProgress >= 1) {
+        state.actionProgress = 0;
+        updateActionRing(0, pPos);
+        state.cash -= 90;
+        hireManager();
+      }
+    } else {
+      updateActionRing(0, pPos);
+      if (chefWarnCooldown <= 0) {
+        const needed = (90 - state.cash).toFixed(2);
+        showFloatingText(hireManagerZone.group.position, `Need $${needed} more!`, "#ef4444");
+        window.audio.warningBuzz();
+        chefWarnCooldown = 2.5;
+      }
+    }
+  }
+
   // Reset ring if moved off any station
-  if (distToOrderZone >= 1.3 && distToCookZone >= 1.4 && distToHireChef >= 1.4 && distToHireServer >= 1.4 && distToBuyTable >= 1.4 && distToSupply >= 1.4 && distToRest >= 1.4 && distToBank >= 1.4) {
+  if (distToOrderZone >= 1.3 && distToCookZone >= 1.4 && distToHireChef >= 1.4 && distToHireServer >= 1.4 && distToBuyTable >= 1.4 && distToSupply >= 1.4 && distToRest >= 1.4 && distToBank >= 1.4 && distToHireCleaner >= 1.4 && distToHireManager >= 1.4) {
     if (state.actionProgress > 0) {
       state.actionProgress = 0;
       updateActionRing(0, pPos);
@@ -1027,6 +1223,104 @@ function animate(now) {
           }
         }
         hiredServer.state = 'idle';
+      }
+    }
+  }
+
+  // Cleaner Worker Automation
+  if (isCleanerWorkingToday() && hiredCleaner) {
+    if (state.cash > 0) {
+      state.cash -= state.cleanerWagePerSec * dt;
+      state.totalWages += state.cleanerWagePerSec * dt;
+      state.dailyWages += state.cleanerWagePerSec * dt;
+    }
+
+    const binPos = new THREE.Vector3(9.4, 0, 3.2);
+    const homePos = new THREE.Vector3(9.4, 0, 2.2);
+
+    if (hiredCleaner.state === 'idle') {
+      const dirtySlot = TABLE_SLOTS.find(s => s.dirty && !s.occupied && s.messMesh && s.messMesh.visible);
+      if (dirtySlot) {
+        hiredCleaner.targetSlot = dirtySlot;
+        hiredCleaner.state = 'walk_to_table';
+      } else if (litterItems.length > 0) {
+        hiredCleaner.targetLitter = litterItems[0];
+        hiredCleaner.state = 'walk_to_litter';
+      } else {
+        moveNpcTowards(hiredCleaner, homePos, 2.0, dt);
+      }
+    } else if (hiredCleaner.state === 'walk_to_table') {
+      if (!hiredCleaner.targetSlot || !hiredCleaner.targetSlot.dirty) {
+        hiredCleaner.state = 'idle';
+      } else {
+        const targetPos = new THREE.Vector3(hiredCleaner.targetSlot.x, 0, hiredCleaner.targetSlot.z);
+        moveNpcTowards(hiredCleaner, targetPos, 3.2, dt);
+        if (hiredCleaner.root.position.distanceTo(targetPos) < 0.6) {
+          hiredCleaner.state = 'cleaning_table';
+          hiredCleaner.cleanTimer = 1.6;
+        }
+      }
+    } else if (hiredCleaner.state === 'cleaning_table') {
+      hiredCleaner.cleanTimer -= dt;
+      hiredCleaner.leftArm.rotation.x = Math.sin(performance.now() * 0.01) * 0.8;
+      hiredCleaner.rightArm.rotation.x = -Math.sin(performance.now() * 0.01) * 0.8;
+      if (hiredCleaner.cleanTimer <= 0) {
+        if (hiredCleaner.targetSlot && hiredCleaner.targetSlot.messMesh) {
+          hiredCleaner.targetSlot.messMesh.visible = false;
+          hiredCleaner.targetSlot.dirty = false;
+        }
+        hiredCleaner.state = 'walk_to_bin';
+      }
+    } else if (hiredCleaner.state === 'walk_to_litter') {
+      if (!hiredCleaner.targetLitter || !litterItems.includes(hiredCleaner.targetLitter)) {
+        hiredCleaner.state = 'idle';
+      } else {
+        const targetPos = hiredCleaner.targetLitter.position;
+        moveNpcTowards(hiredCleaner, targetPos, 3.2, dt);
+        if (hiredCleaner.root.position.distanceTo(targetPos) < 0.5) {
+          const idx = litterItems.indexOf(hiredCleaner.targetLitter);
+          if (idx !== -1) {
+            gameScene.scene.remove(hiredCleaner.targetLitter);
+            litterItems.splice(idx, 1);
+          }
+          hiredCleaner.targetLitter = null;
+          hiredCleaner.state = 'walk_to_bin';
+        }
+      }
+    } else if (hiredCleaner.state === 'walk_to_bin') {
+      moveNpcTowards(hiredCleaner, binPos, 3.2, dt);
+      if (hiredCleaner.root.position.distanceTo(binPos) < 0.4) {
+        window.audio.pop();
+        showFloatingText(binPos, "♻️ Cleaner Binned Trash!", "#14b8a6");
+        hiredCleaner.state = 'idle';
+      }
+    }
+  }
+
+  // Assistant Manager Automation (Auto-Restocker)
+  if (isManagerWorkingToday() && hiredManager) {
+    if (state.cash > 0) {
+      state.cash -= state.managerWagePerSec * dt;
+      state.totalWages += state.managerWagePerSec * dt;
+      state.dailyWages += state.managerWagePerSec * dt;
+    }
+
+    hiredManager.checkTimer = (hiredManager.checkTimer || 0) + dt;
+    if (hiredManager.checkTimer > 3.0) {
+      hiredManager.checkTimer = 0;
+      const inv = state.inventory;
+      if (inv.dough <= 4 || inv.sauce <= 4 || inv.cheese <= 4) {
+        if (state.cash >= 15) {
+          state.cash -= 15;
+          state.totalCOGS += 15;
+          state.dailyCOGS += 15;
+          inv.dough = Math.min(state.maxInventoryCapacity, inv.dough + 10);
+          inv.sauce = Math.min(state.maxInventoryCapacity, inv.sauce + 10);
+          inv.cheese = Math.min(state.maxInventoryCapacity, inv.cheese + 10);
+          window.audio.boxPickup();
+          showFloatingText(hiredManager.root.position, "📋 Restocked Supplies (-$15)", "#818cf8");
+          gameState.save();
+        }
       }
     }
   }

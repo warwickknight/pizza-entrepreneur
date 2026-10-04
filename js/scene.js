@@ -360,6 +360,106 @@ class GameScene {
     return tableGroup;
   }
 
+  createDiningPlatterMesh() {
+    const platterGroup = new THREE.Group();
+    const woodMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.7 });
+    const crustMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.8 });
+    const cheeseMat = new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.4 });
+    const pepMat = new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.6 });
+
+    // Wooden Round Serving Board
+    const board = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.48, 0.04, 20), woodMat);
+    board.position.y = 0.02;
+    board.castShadow = true;
+    board.receiveShadow = true;
+    platterGroup.add(board);
+
+    // 4 Slices of Pizza
+    const slices = [];
+    const sliceCount = 4;
+    for (let i = 0; i < sliceCount; i++) {
+      const sliceGroup = new THREE.Group();
+      const thetaStart = i * (Math.PI * 2 / sliceCount);
+      const thetaLen = (Math.PI * 2 / sliceCount) * 0.94; // slight gap
+
+      const crust = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.46, 0.44, 0.035, 8, 1, false, thetaStart, thetaLen),
+        crustMat
+      );
+      crust.position.y = 0.04;
+      crust.castShadow = true;
+      sliceGroup.add(crust);
+
+      const cheese = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.42, 0.42, 0.04, 8, 1, false, thetaStart, thetaLen),
+        cheeseMat
+      );
+      cheese.position.y = 0.045;
+      sliceGroup.add(cheese);
+
+      // 2 Pepperoni slices per quarter
+      for (let p = 0; p < 2; p++) {
+        const midAngle = thetaStart + (p === 0 ? 0.28 : 0.62) * thetaLen;
+        const dist = 0.22 + p * 0.12;
+        const pep = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.05, 10), pepMat);
+        pep.position.set(Math.cos(midAngle) * dist, 0.05, Math.sin(midAngle) * dist);
+        sliceGroup.add(pep);
+      }
+
+      platterGroup.add(sliceGroup);
+      slices.push(sliceGroup);
+    }
+    platterGroup.slices = slices;
+    platterGroup.position.y = 1.15; // Sits on dining tabletop
+    return platterGroup;
+  }
+
+  createRubbishBinMesh(x = 9.4, z = 3.2) {
+    const binGroup = new THREE.Group();
+    const darkMetal = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6, metalness: 0.4 });
+    const greenBody = new THREE.MeshStandardMaterial({ color: 0x065f46, roughness: 0.5 }); // Dark park green
+    const linerMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.9 });
+    const emblemMat = new THREE.MeshBasicMaterial({ color: 0x34d399 });
+
+    // Weighted base
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.46, 0.08, 16), darkMetal);
+    base.position.y = 0.04;
+    base.castShadow = true;
+    base.receiveShadow = true;
+    binGroup.add(base);
+
+    // Main barrel
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.36, 0.95, 18), greenBody);
+    body.position.y = 0.52;
+    body.castShadow = true;
+    binGroup.add(body);
+
+    // Dark liner bag rim
+    const liner = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.39, 0.06, 18), linerMat);
+    liner.position.y = 1.0;
+    binGroup.add(liner);
+
+    // Hood / Domed cover with front disposal aperture
+    const hood = new THREE.Mesh(new THREE.CylinderGeometry(0.40, 0.40, 0.24, 18), darkMetal);
+    hood.position.y = 1.12;
+    hood.castShadow = true;
+    binGroup.add(hood);
+
+    const aperture = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.14, 0.12), linerMat);
+    aperture.position.set(0, 1.12, 0.35);
+    binGroup.add(aperture);
+
+    // Recycling / trash green emblem icon
+    const emblem = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.02, 12), emblemMat);
+    emblem.rotation.x = Math.PI / 2;
+    emblem.position.set(0, 0.68, 0.37);
+    binGroup.add(emblem);
+
+    binGroup.position.set(x, 0, z);
+    this.scene.add(binGroup);
+    return binGroup;
+  }
+
   // 3D Physical Small Table & Clipboard (Staff Rota Station)
   createClipboardProp() {
     const group = new THREE.Group();

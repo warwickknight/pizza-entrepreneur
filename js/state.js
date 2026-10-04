@@ -17,9 +17,16 @@ const defaultState = {
   tablePurchased: false,
   tablesCount: 0, // Up to 4 dining tables in garden lawn
 
+  cleanerHired: false,
+  cleanerWagePerSec: 0.08,
+  managerHired: false,
+  managerWagePerSec: 0.16,
+
   // 7-day Rota Schedule: Array of booleans for [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
   chefRota: [true, true, true, true, true, true, true],
   serverRota: [true, true, true, true, true, true, true],
+  cleanerRota: [true, true, true, true, true, true, true],
+  managerRota: [true, true, true, true, true, true, true],
 
   // Calendar & Day/Night Cycle (Each shift is 90 seconds)
   dayIndex: 0, // 0 = Mon, 1 = Tue, ... 6 = Sun
@@ -109,6 +116,10 @@ class GameState {
           ...parsed,
           chefRota: parsed.chefRota || [...defaultState.chefRota],
           serverRota: parsed.serverRota || [...defaultState.serverRota],
+          cleanerHired: parsed.cleanerHired || false,
+          cleanerRota: parsed.cleanerRota || [...defaultState.cleanerRota],
+          managerHired: parsed.managerHired || false,
+          managerRota: parsed.managerRota || [...defaultState.managerRota],
           inventory: parsed.inventory || { ...defaultState.inventory },
           menuPrice: parsed.menuPrice || defaultState.menuPrice,
           hasRefrigeration: parsed.hasRefrigeration || false,
@@ -156,6 +167,10 @@ class GameState {
         tablesCount: this.data.tablesCount,
         chefRota: this.data.chefRota,
         serverRota: this.data.serverRota,
+        cleanerHired: this.data.cleanerHired,
+        cleanerRota: this.data.cleanerRota,
+        managerHired: this.data.managerHired,
+        managerRota: this.data.managerRota,
         inventory: this.data.inventory,
         menuPrice: this.data.menuPrice,
         hasRefrigeration: this.data.hasRefrigeration,

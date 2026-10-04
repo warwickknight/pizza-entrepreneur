@@ -59,6 +59,12 @@ class AudioEngine {
     this.vibrate(20);
     this.beep(880, 'sine', 0.06, 0.12);
   }
+  pop() {
+    if (!this.enabled) return;
+    this.init();
+    this.vibrate(15);
+    this.beep(660, 'sine', 0.05, 0.12);
+  }
   ovenSizzle() {
     if (!this.enabled) return;
     this.init();

@@ -491,6 +491,8 @@
     if (!isModalOpen(dilemmaModal)) return;
     if (!activeDilemma) activeDilemma = DILEMMAS[0];
     const opt = choice === 'A' ? activeDilemma.optA : activeDilemma.optB;
+    hideModal(dilemmaModal);
+    activeDilemma = null;
 
     state.familyMorale = Math.max(0, Math.min(100, state.familyMorale + opt.morale));
     state.founderEnergy = Math.max(5, Math.min(100, state.founderEnergy + opt.energy));
@@ -503,9 +505,6 @@
     if (window.showFloatingText && window.player) {
       window.showFloatingText(window.player.root.position, choice === 'A' ? "Priority: Life & Well-Being ❤️" : "Priority: Business Revenue 💼", "#f59e0b");
     }
-
-    hideModal(dilemmaModal);
-    activeDilemma = null;
   }
   window.resolveDilemma = resolveDilemma;
 

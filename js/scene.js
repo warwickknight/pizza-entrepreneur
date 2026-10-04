@@ -477,48 +477,144 @@ class GameScene {
     return group;
   }
 
-  // Supply Chain Pallet & Crates (Phase 2 & 3)
+  // Supply Chain: Elevated Rustic Wooden Supply Box & Ingredient Crates
   createSupplyPalletMeshes() {
     const group = new THREE.Group();
-    const woodMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.85 });
-    const sackMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.9 }); // Flour sacks
-    const sauceMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.6 }); // Sauce cans
-    const cheeseMat = new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.5 }); // Cheese wheels
+    const woodMat = new THREE.MeshStandardMaterial({ color: 0x92400e, roughness: 0.75 }); // Rich warm cedar
+    const darkWoodMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.85 }); // Sturdy crate corners
+    const sackMat = new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.95 }); // White flour sacks
+    const sauceMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.4 }); // Bright red tomato cans
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.3, metalness: 0.4 }); // Can lid / brass
+    const cheeseMat = new THREE.MeshStandardMaterial({ color: 0xfef08a, roughness: 0.5 }); // Fresh mozzarella cheese blocks
+    const herbMat = new THREE.MeshStandardMaterial({ color: 0x16a34a, roughness: 0.6 }); // Basil / garnish
 
-    // Wooden Pallet slats
-    const palletBase = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.12, 1.6), woodMat);
-    palletBase.position.y = 0.06;
-    palletBase.receiveShadow = true;
-    group.add(palletBase);
+    // Elevated Wooden Work Crate / Stand (Waist height, clearly visible above floor)
+    const standLegs = [
+      [-0.75, 0.45, -0.75],
+      [0.75, 0.45, -0.75],
+      [-0.75, 0.45, 0.75],
+      [0.75, 0.45, 0.75]
+    ];
+    standLegs.forEach(([x, y, z]) => {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.85, 0.14), darkWoodMat);
+      leg.position.set(x, y, z);
+      leg.castShadow = true;
+      group.add(leg);
+    });
 
-    // Flour Sacks on Pallet (Dough)
-    const flour1 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 0.4), sackMat);
-    flour1.position.set(-0.35, 0.28, -0.35);
-    flour1.castShadow = true;
-    group.add(flour1);
+    // Elevated Supply Table / Crate Base (at y = 0.88m)
+    const tableTop = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.12, 1.8), woodMat);
+    tableTop.position.y = 0.88;
+    tableTop.castShadow = true;
+    tableTop.receiveShadow = true;
+    group.add(tableTop);
 
-    const flour2 = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.32, 0.38), sackMat);
-    flour2.position.set(-0.32, 0.62, -0.32);
-    flour2.rotation.y = 0.2;
-    flour2.castShadow = true;
-    group.add(flour2);
+    // Deep Kitchen Supply Box / Bin rim
+    const boxBack = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.35, 0.1), woodMat);
+    boxBack.position.set(0, 1.08, -0.8);
+    group.add(boxBack);
 
-    // Red Tomato Sauce Cans / Crate
-    const sauceCrate = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.32, 0.5), woodMat);
-    sauceCrate.position.set(0.35, 0.24, -0.35);
-    sauceCrate.castShadow = true;
-    group.add(sauceCrate);
+    const boxFront = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.22, 0.1), woodMat);
+    boxFront.position.set(0, 1.01, 0.8);
+    group.add(boxFront);
 
-    const sauceCan = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.28, 12), sauceMat);
-    sauceCan.position.set(0.35, 0.52, -0.35);
-    group.add(sauceCan);
+    const boxLeft = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.35, 1.6), woodMat);
+    boxLeft.position.set(-0.8, 1.08, 0);
+    group.add(boxLeft);
 
-    // Yellow Mozzarella Wheels / Cooler
-    const cheeseWheel = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.22, 16), cheeseMat);
-    cheeseWheel.position.set(0, 0.24, 0.35);
-    cheeseWheel.castShadow = true;
-    group.add(cheeseWheel);
+    const boxRight = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.35, 1.6), woodMat);
+    boxRight.position.set(0.8, 1.08, 0);
+    group.add(boxRight);
 
+    // Wooden Divider Slats inside crate
+    const divider = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.28, 1.5), darkWoodMat);
+    divider.position.set(-0.25, 1.04, 0);
+    group.add(divider);
+
+    // 1. INGREDIENT: Flour & Dough Sacks (Left section)
+    const flourBag1 = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.38, 0.55), sackMat);
+    flourBag1.position.set(-0.52, 1.12, -0.35);
+    flourBag1.castShadow = true;
+    group.add(flourBag1);
+
+    const flourBag2 = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.34, 0.5), sackMat);
+    flourBag2.position.set(-0.52, 1.12, 0.3);
+    flourBag2.rotation.y = 0.15;
+    flourBag2.castShadow = true;
+    group.add(flourBag2);
+
+    // Round Dough Balls ready in a wooden tray
+    const dough1 = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 14), cheeseMat);
+    dough1.position.set(-0.52, 1.34, -0.35);
+    group.add(dough1);
+
+    // 2. INGREDIENT: Italian San Marzano Tomato Sauce Cans (Right section)
+    const canPositions = [
+      [0.18, 1.12, -0.45],
+      [0.52, 1.12, -0.45],
+      [0.35, 1.12, -0.15]
+    ];
+    canPositions.forEach(([cx, cy, cz]) => {
+      const can = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.32, 16), sauceMat);
+      can.position.set(cx, cy, cz);
+      can.castShadow = true;
+      group.add(can);
+
+      const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.132, 0.132, 0.04, 16), goldMat);
+      lid.position.set(cx, cy + 0.16, cz);
+      group.add(lid);
+    });
+
+    // 3. INGREDIENT: Mozzarella Cheese Wheels / Blocks (Front right)
+    const cheese1 = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.22, 16), cheeseMat);
+    cheese1.position.set(0.35, 1.08, 0.42);
+    cheese1.castShadow = true;
+    group.add(cheese1);
+
+    const cheeseWedge = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.2), cheeseMat);
+    cheeseWedge.position.set(0.32, 1.25, 0.42);
+    cheeseWedge.rotation.y = 0.4;
+    group.add(cheeseWedge);
+
+    // Fresh Basil Garnish Pot
+    const herbPot = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.09, 0.15, 12), darkWoodMat);
+    herbPot.position.set(-0.25, 1.25, 0.65);
+    group.add(herbPot);
+
+    const herbBush = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 10), herbMat);
+    herbBush.position.set(-0.25, 1.38, 0.65);
+    group.add(herbBush);
+
+    // Prominent Supply Box Wooden Plaque / Label Banner ("SUPPLIES")
+    const signCanvas = document.createElement('canvas');
+    signCanvas.width = 256;
+    signCanvas.height = 64;
+    const sCtx = signCanvas.getContext('2d');
+    sCtx.fillStyle = '#1e293b';
+    if (sCtx.roundRect) {
+      sCtx.beginPath();
+      sCtx.roundRect(4, 4, 248, 56, 12);
+      sCtx.fill();
+      sCtx.strokeStyle = '#f59e0b';
+      sCtx.lineWidth = 3;
+      sCtx.stroke();
+    } else {
+      sCtx.fillRect(4, 4, 248, 56);
+    }
+    sCtx.fillStyle = '#fef08a';
+    sCtx.font = 'bold 26px sans-serif';
+    sCtx.textAlign = 'center';
+    sCtx.fillText('📦 INGREDIENTS', 128, 40);
+
+    const signTex = new THREE.CanvasTexture(signCanvas);
+    const signMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.2, 0.3),
+      new THREE.MeshBasicMaterial({ map: signTex, transparent: true })
+    );
+    signMesh.position.set(0, 1.02, 0.87);
+    group.add(signMesh);
+
+    // Position the supply box near the oven & restock zone
     group.position.set(-6.2, 0.12, -2.5);
     this.scene.add(group);
     return group;

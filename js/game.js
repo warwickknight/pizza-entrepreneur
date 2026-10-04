@@ -9,20 +9,39 @@ function createGroundZoneRing(scene, radius, colorHex, labelText, subText, optio
   const showLabel = options.showLabel !== false;
   const popupOnStep = !!options.popupOnStep;
 
+  // Elevate above patio floor (patio surface is at y = 0.245)
   const ring = new THREE.Mesh(
-    new THREE.RingGeometry(radius - 0.15, radius, 32),
-    new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide })
+    new THREE.RingGeometry(radius - 0.16, radius, 32),
+    new THREE.MeshBasicMaterial({
+      color: colorHex,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2
+    })
   );
   ring.rotation.x = -Math.PI / 2;
-  ring.position.y = 0.23;
+  ring.position.y = 0.265;
+  ring.renderOrder = 3;
   group.add(ring);
 
   const disc = new THREE.Mesh(
-    new THREE.CircleGeometry(radius - 0.16, 32),
-    new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.2, side: THREE.DoubleSide })
+    new THREE.CircleGeometry(radius - 0.17, 32),
+    new THREE.MeshBasicMaterial({
+      color: colorHex,
+      transparent: true,
+      opacity: 0.35,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1
+    })
   );
   disc.rotation.x = -Math.PI / 2;
-  disc.position.y = 0.22;
+  disc.position.y = 0.26;
+  disc.renderOrder = 2;
   group.add(disc);
 
   let sprite = null, canvasText = null, ctx = null, tex = null;
@@ -140,6 +159,7 @@ const bankZone = createGroundZoneRing(gameScene.scene, 1.3, 0x14b8a6, "BANK ATM"
 bankZone.group.position.set(-6.5, 0, 1.8);
 
 
+const allGroundZones = [zoneOrder, zoneCook, zonePickup, hireChefZone, hireServerZone, buyTableZone, supplyZone, restZone, bankZone];
 const popupZones = [hireChefZone, hireServerZone, buyTableZone, supplyZone, restZone, bankZone];
 function updateZonePopupVisibility(playerPos) {
   popupZones.forEach(z => {
@@ -906,6 +926,12 @@ function animate(now) {
 
   // 5. Environmental & VFX Animations
   gameScene.ovenFireLight.intensity = 2.2 + Math.sin(now * 0.015) * 0.6;
+  const pulseFactor = 0.35 + Math.sin(now * 0.005) * 0.12;
+  allGroundZones.forEach(z => {
+    if (z && z.disc && z.disc.material) {
+      z.disc.material.opacity = pulseFactor;
+    }
+  });
   gameScene.updateParticles(dt);
   gameScene.updateCameraFollow(player.root.position, dt);
 

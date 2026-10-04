@@ -146,13 +146,13 @@ hireServerZone.group.position.set(6.2, 0, 4.2);
 const buyTableZone = createGroundZoneRing(gameScene.scene, 1.4, 0x06b6d4, "BUY TABLE", "$35 · Dine-In & Drinks", { popupOnStep: true });
 buyTableZone.group.position.set(5.5, 0, -0.8);
 
-// Phase 2: Supply Chain Restock Pad (Pallet Station)
+// Phase 2: Supply Chain Restock Pad (Supply Box Station - well clear of oven)
 const supplyZone = createGroundZoneRing(gameScene.scene, 1.4, 0x10b981, "RESTOCK", "Supplies & Pallets", { popupOnStep: true });
-supplyZone.group.position.set(-6.2, 0, -2.5);
+supplyZone.group.position.set(-8.0, 0, -2.0);
 
-// Phase 3: Rest Zone (Cozy Corner Armchair · Recharges Energy & Coffee)
-const restZone = createGroundZoneRing(gameScene.scene, 1.4, 0xf59e0b, "TAKE BREAK", "Rest & Recharge ⚡", { popupOnStep: true });
-restZone.group.position.set(-7.2, 0, -5.5);
+// Phase 3: Rest Zone (Outdoor Park Bench on the Lawn · Recharges Energy & Coffee)
+const restZone = createGroundZoneRing(gameScene.scene, 1.4, 0xf59e0b, "TAKE BREAK", "Rest on Bench ⚡", { popupOnStep: true });
+restZone.group.position.set(10.5, 0, 1.5);
 
 // Phase 3: Bank Micro-Loan ATM Zone
 const bankZone = createGroundZoneRing(gameScene.scene, 1.3, 0x14b8a6, "BANK ATM", "Loans & Debt 🏦", { popupOnStep: true });
@@ -173,8 +173,7 @@ function updateZonePopupVisibility(playerPos) {
 // Instantiate 3D In-World Physical Props
 const physicalClipboard = gameScene.createClipboardProp(); // Small desk & clipboard at (-5.6, 0.12, -5.5)
 const physicalChalkboard = gameScene.createChalkboardProp();
-const physicalPallet = gameScene.createSupplyPalletMeshes();
-const physicalRestChair = gameScene.createRestChairMesh(); // Corner rest chair at (-7.2, 0.12, -5.5)
+const physicalPallet = gameScene.createSupplyPalletMeshes(); // Supply box table at (-8.0, 0.12, -2.0)
 const physicalGrassBench = gameScene.createOutdoorGrassBenchMesh(); // Out on the lawn at (10.5, 0.02, 1.5)
 const physicalAtm = gameScene.createBankAtmProp();
 
@@ -463,7 +462,7 @@ function animate(now) {
     playerStack.forEach(box => { box.rotation.z = 0; box.rotation.x = 0; });
   }
 
-  // Collision Boundaries & Solid Obstacles (Stone oven, Prep table, Box table, Service counter, Patio trim)
+  // Collision Boundaries & Solid Obstacles (Stone oven, Prep table, Box table, Service counter, Supply table, Patio trim)
   const OBSTACLES = [
     // Stone Oven: x: -5.5, z: -4.5, base: 3.0 x 3.0
     { minX: -7.2, maxX: -3.8, minZ: -6.2, maxZ: -2.8 },
@@ -473,6 +472,8 @@ function animate(now) {
     { minX: -1.2, maxX: 1.2, minZ: -5.5, maxZ: -3.5 },
     // Service Counter: x: 0, z: 3.2, size: 6.8 x 1.6
     { minX: -3.6, maxX: 3.6, minZ: 2.2, maxZ: 4.2 },
+    // Supply Table: x: -8.0, z: -2.0, size: 1.8 x 1.8
+    { minX: -9.0, maxX: -7.0, minZ: -3.0, maxZ: -1.0 },
     // Low back wall
     { minX: -10, maxX: 10, minZ: -8.5, maxZ: -7.1 },
   ];

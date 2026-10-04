@@ -614,8 +614,8 @@ class GameScene {
     signMesh.position.set(0, 1.02, 0.87);
     group.add(signMesh);
 
-    // Position the supply box near the oven & restock zone
-    group.position.set(-6.2, 0.12, -2.5);
+    // Position the supply box safely away from the oven opening (west wall area)
+    group.position.set(-8.0, 0.12, -2.0);
     this.scene.add(group);
     return group;
   }

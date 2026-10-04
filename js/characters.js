@@ -188,7 +188,7 @@ class Customer {
     // Families arrive with a child who tags along
     if (chosen.type === 'family') {
       this.child = createChibiHuman(gameScene.scene, 0xec4899, 'none', 0.62, 0x3e2723);
-      this.child.root.position.copy(this.char.root.position).add(new THREE.Vector3(0.9, 0, -0.3));
+      this.child.root.position.copy(this.char.root.position).add(new THREE.Vector3(-0.65, 0, -0.45));
     }
 
     this.bubble = document.createElement('div');
@@ -295,7 +295,7 @@ class Customer {
     } else if (this.state === 'walk_to_table') {
       const chairX = this.tableSlot ? this.tableSlot.chairX : 10.0;
       const chairZ = this.tableSlot ? this.tableSlot.chairZ : -3.2;
-      const tableChairPos = new THREE.Vector3(chairX, 0, chairZ);
+      const tableChairPos = new THREE.Vector3(chairX, 0.14, chairZ);
       this.moveTowards(tableChairPos, 3.2, dt);
       if (this.char.root.position.distanceTo(tableChairPos) < 0.25) {
         this.state = 'eating_at_table';
@@ -381,23 +381,52 @@ class Customer {
     return true;
   }
 
-  // Child trails beside the parent, mirroring walk/idle
+  // Child trails beside the parent, sits at opposite bistro chair when dining
   updateChild(dt) {
     if (!this.child) return;
     const c = this.child.root;
-    const target = new THREE.Vector3(0.9, 0, -0.3).add(this.char.root.position);
+
+    if (this.state === 'walk_to_table' || this.state === 'eating_at_table') {
+      if (this.tableSlot) {
+        // Position child at the second bistro chair directly across the table
+        const chair2Pos = new THREE.Vector3(this.tableSlot.x + 1.2, 0.14, this.tableSlot.z);
+        c.position.lerp(chair2Pos, Math.min(1, dt * 5));
+        c.rotation.y = -Math.PI / 2; // Facing West toward table and parent
+
+        if (this.state === 'eating_at_table') {
+          this.child.leftLeg.rotation.x = 0;
+          this.child.rightLeg.rotation.x = 0;
+          this.child.leftArm.rotation.x = -0.7 + Math.sin(this.walkCycle * 0.7) * 0.15;
+          this.child.rightArm.rotation.x = -0.7 - Math.sin(this.walkCycle * 0.7) * 0.15;
+          this.child.head.rotation.x = Math.sin(this.walkCycle * 0.9) * 0.12;
+          return;
+        }
+      }
+    }
+
+    // Walking / waiting: trail smoothly relative to the parent's actual heading
+    const parentYaw = this.char.root.rotation.y;
+    const localOffset = new THREE.Vector3(-0.65, 0, -0.45);
+    localOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), parentYaw);
+    const target = this.char.root.position.clone().add(localOffset);
     target.y = 0;
+
     const before = c.position.clone();
     c.position.lerp(target, Math.min(1, dt * 6));
     const moved = c.position.distanceTo(before) / Math.max(dt, 0.0001);
     c.rotation.y = this.char.root.rotation.y;
-    if (moved > 0.4) {
+
+    if (moved > 0.3) {
       const s = Math.sin(this.walkCycle * 1.3) * 0.6;
       this.child.leftLeg.rotation.x = s;
       this.child.rightLeg.rotation.x = -s;
+      this.child.leftArm.rotation.x = -s * 0.5;
+      this.child.rightArm.rotation.x = s * 0.5;
     } else {
       this.child.leftLeg.rotation.x = 0;
       this.child.rightLeg.rotation.x = 0;
+      this.child.leftArm.rotation.x = 0;
+      this.child.rightArm.rotation.x = 0;
     }
   }
 

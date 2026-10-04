@@ -241,7 +241,7 @@ const physicalRubbishBin = gameScene.createRubbishBinMesh(9.4, 3.2);
 window.spawnTablePizza = function(slot) {
   if (!slot) return null;
   const platter = gameScene.createDiningPlatterMesh();
-  platter.position.set(slot.x - 0.15, 0, slot.z);
+  platter.position.set(slot.x - 0.15, 0.14, slot.z);
   gameScene.scene.add(platter);
   return platter;
 };
@@ -411,8 +411,8 @@ function getTableCleaningSpot(cleanerPos, slot) {
   if (!slot) return new THREE.Vector3();
   // Table center is (slot.x, slot.z), chairs at x +/- 1.2
   // Accessible, comfortable cleaning points are at North and South edges of the table
-  const spotNorth = new THREE.Vector3(slot.x, 0, slot.z - 1.45);
-  const spotSouth = new THREE.Vector3(slot.x, 0, slot.z + 1.45);
+  const spotNorth = new THREE.Vector3(slot.x, 0.14, slot.z - 1.45);
+  const spotSouth = new THREE.Vector3(slot.x, 0.14, slot.z + 1.45);
   return cleanerPos.distanceTo(spotNorth) < cleanerPos.distanceTo(spotSouth) ? spotNorth : spotSouth;
 }
 
@@ -446,7 +446,7 @@ function buildTableMessForSlot(slot) {
     ball.position.set(x, 1.24, z);
     mess.add(ball);
   });
-  mess.position.set(slot.x, 0, slot.z);
+  mess.position.set(slot.x, 0.14, slot.z);
   gameScene.scene.add(mess);
   return mess;
 }

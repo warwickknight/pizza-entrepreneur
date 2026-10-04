@@ -119,6 +119,53 @@ class GameScene {
     return tex;
   }
 
+  createDeckTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    // Rich teak / honey cedar wood base
+    ctx.fillStyle = '#b45309';
+    ctx.fillRect(0, 0, 512, 512);
+
+    const plankH = 32;
+    const plankColors = ['#9a3412', '#b45309', '#c2410c', '#854d0e', '#a16207', '#78350f'];
+
+    for (let y = 0; y < 512; y += plankH) {
+      // Individual plank tone variation
+      ctx.fillStyle = plankColors[Math.floor(Math.random() * plankColors.length)];
+      ctx.fillRect(0, y + 2, 512, plankH - 4);
+
+      // Fine wood grain streaks
+      ctx.fillStyle = 'rgba(67, 20, 7, 0.18)';
+      for (let g = 0; g < 4; g++) {
+        const gy = y + 4 + Math.random() * (plankH - 8);
+        ctx.fillRect(0, gy, 512, 1.5);
+      }
+
+      // Dark shadow groove between planks
+      ctx.fillStyle = '#290f04';
+      ctx.fillRect(0, y, 512, 2);
+      ctx.fillRect(0, y + plankH - 2, 512, 2);
+
+      // Screw / fastener dots on plank ends and joints
+      ctx.fillStyle = '#451a03';
+      for (let x = 16; x < 512; x += 128) {
+        ctx.beginPath();
+        ctx.arc(x, y + 8, 2.2, 0, Math.PI * 2);
+        ctx.arc(x, y + plankH - 8, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(2, 4);
+    return tex;
+  }
+
   setupEnvironment() {
     // Lush plaza ground
     const cobblestoneTex = this.createCobblestoneTexture();
@@ -150,6 +197,9 @@ class GameScene {
     trimFront.position.set(0, 0.14, 7.2);
     trimFront.receiveShadow = true;
     this.scene.add(trimFront);
+
+    // Outdoor Garden Decked Seating Terrace
+    this.setupOutdoorDeck();
 
     // Rustic back low wall & warm lanterns
     const darkWoodMat = new THREE.MeshStandardMaterial({ color: 0x3d1a08, roughness: 0.85 });
@@ -191,6 +241,165 @@ class GameScene {
       line.position.set(i, 0.03, 14.5);
       this.scene.add(line);
     }
+  }
+
+  setupOutdoorDeck() {
+    const deckGroup = new THREE.Group();
+    const deckTex = this.createDeckTexture();
+    const deckMat = new THREE.MeshStandardMaterial({
+      map: deckTex,
+      roughness: 0.5,
+      metalness: 0.05
+    });
+    const darkWoodMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.75 });
+    const warmWoodMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.65 });
+    const brassMat = new THREE.MeshStandardMaterial({ color: 0xd97706, metalness: 0.8, roughness: 0.3 });
+    const glowBulbMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+    const flowerRedMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.5 });
+    const flowerPurpleMat = new THREE.MeshStandardMaterial({ color: 0x9333ea, roughness: 0.5 });
+    const flowerWhiteMat = new THREE.MeshStandardMaterial({ color: 0xfef2f2, roughness: 0.5 });
+    const foliageMat = new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6 });
+
+    // 1. Main Deck Flooring Platform (width: 8.6, depth: 8.4, height: 0.14)
+    // Centered at x = 13.1, z = -1.1 (spans x: [8.8, 17.4], z: [-5.3, 3.1])
+    const deckPlatform = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.14, 8.4), deckMat);
+    deckPlatform.position.set(13.1, 0.07, -1.1);
+    deckPlatform.receiveShadow = true;
+    deckPlatform.castShadow = true;
+    deckGroup.add(deckPlatform);
+
+    // 2. Beveled Dark Wood Fascia Edge Trim around perimeter
+    // East trim (x = 17.42)
+    const trimEast = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 8.45), darkWoodMat);
+    trimEast.position.set(17.42, 0.08, -1.1);
+    trimEast.receiveShadow = true;
+    deckGroup.add(trimEast);
+
+    // North trim (z = -5.32)
+    const trimNorth = new THREE.Mesh(new THREE.BoxGeometry(8.65, 0.16, 0.18), darkWoodMat);
+    trimNorth.position.set(13.1, 0.08, -5.32);
+    trimNorth.receiveShadow = true;
+    deckGroup.add(trimNorth);
+
+    // South trim (z = 3.12)
+    const trimSouth = new THREE.Mesh(new THREE.BoxGeometry(8.65, 0.16, 0.18), darkWoodMat);
+    trimSouth.position.set(13.1, 0.08, 3.12);
+    trimSouth.receiveShadow = true;
+    deckGroup.add(trimSouth);
+
+    // Smooth beveled threshold step at South walkway (z = 3.32)
+    const step = new THREE.Mesh(new THREE.BoxGeometry(4.4, 0.07, 0.35), warmWoodMat);
+    step.position.set(13.1, 0.035, 3.35);
+    step.receiveShadow = true;
+    deckGroup.add(step);
+
+    // 3. Four Rustic Timber Pergola Corner Posts
+    const postPositions = [
+      [8.85, -5.25],
+      [17.35, -5.25],
+      [8.85, 3.05],
+      [17.35, 3.05]
+    ];
+
+    postPositions.forEach(([px, pz]) => {
+      // Main timber post
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.7, 0.18), warmWoodMat);
+      post.position.set(px, 1.35, pz);
+      post.castShadow = true;
+      deckGroup.add(post);
+
+      // Pyramidal brass cap
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.12, 4), brassMat);
+      cap.position.set(px, 2.76, pz);
+      cap.rotation.y = Math.PI / 4;
+      deckGroup.add(cap);
+
+      // Post lantern bracket & warm glowing bulb
+      const lanternArm = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.16), darkWoodMat);
+      lanternArm.position.set(px, 2.2, pz + (pz > 0 ? -0.12 : 0.12));
+      deckGroup.add(lanternArm);
+
+      const lanternGlow = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), glowBulbMat);
+      lanternGlow.position.set(px, 2.12, pz + (pz > 0 ? -0.18 : 0.18));
+      deckGroup.add(lanternGlow);
+    });
+
+    // 4. Overhead Pergola Crossbeams at y = 2.62
+    [-5.25, 3.05].forEach(bz => {
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(8.8, 0.12, 0.14), warmWoodMat);
+      beam.position.set(13.1, 2.62, bz);
+      beam.castShadow = true;
+      deckGroup.add(beam);
+    });
+
+    [10.2, 12.0, 14.2, 16.0].forEach(bx => {
+      const rafter = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.10, 8.5), warmWoodMat);
+      rafter.position.set(bx, 2.72, -1.1);
+      rafter.castShadow = true;
+      deckGroup.add(rafter);
+    });
+
+    // 5. Festoon String Fairy Lights draped across terrace
+    const bulbCount = 14;
+    for (let i = 0; i < bulbCount; i++) {
+      const t = (i + 0.5) / bulbCount;
+      const bx = 9.2 + t * 7.8;
+      const sag = Math.sin(t * Math.PI) * 0.16;
+      const bz = -4.5 + t * 7.0;
+      const by = 2.58 - sag;
+
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), glowBulbMat);
+      bulb.position.set(bx, by, bz);
+      deckGroup.add(bulb);
+
+      const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.08, 6), darkWoodMat);
+      cord.position.set(bx, by + 0.05, bz);
+      deckGroup.add(cord);
+    }
+
+    // Warm terrace ambient glow light
+    const deckLight = new THREE.PointLight(0xfef08a, 0.75, 12);
+    deckLight.position.set(13.1, 2.4, -1.1);
+    deckGroup.add(deckLight);
+
+    // 6. Planter Boxes with colorful flowers along outer edges
+    const planterConfigs = [
+      { x: 17.3, z: -3.0, w: 0.45, d: 2.2 },
+      { x: 17.3, z: 0.8, w: 0.45, d: 2.2 },
+      { x: 15.5, z: 3.05, w: 2.2, d: 0.45 }
+    ];
+
+    planterConfigs.forEach(cfg => {
+      const box = new THREE.Mesh(new THREE.BoxGeometry(cfg.w, 0.38, cfg.d), warmWoodMat);
+      box.position.set(cfg.x, 0.28, cfg.z);
+      box.castShadow = true;
+      box.receiveShadow = true;
+      deckGroup.add(box);
+
+      const soil = new THREE.Mesh(new THREE.BoxGeometry(cfg.w - 0.08, 0.08, cfg.d - 0.08), darkWoodMat);
+      soil.position.set(cfg.x, 0.44, cfg.z);
+      deckGroup.add(soil);
+
+      const flowerCount = 6;
+      for (let f = 0; f < flowerCount; f++) {
+        const isLongD = cfg.d > cfg.w;
+        const fOffset = (f - (flowerCount - 1) / 2) * (isLongD ? (cfg.d - 0.4) / flowerCount : (cfg.w - 0.4) / flowerCount);
+        const fx = cfg.x + (isLongD ? 0 : fOffset);
+        const fz = cfg.z + (isLongD ? fOffset : 0);
+
+        const bush = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), foliageMat);
+        bush.position.set(fx, 0.50, fz);
+        deckGroup.add(bush);
+
+        const flMat = f % 3 === 0 ? flowerRedMat : (f % 3 === 1 ? flowerPurpleMat : flowerWhiteMat);
+        const flower = new THREE.Mesh(new THREE.SphereGeometry(0.065, 6, 6), flMat);
+        flower.position.set(fx, 0.58, fz);
+        deckGroup.add(flower);
+      }
+    });
+
+    this.scene.add(deckGroup);
+    return deckGroup;
   }
 
   setupKitchen() {
@@ -356,7 +565,7 @@ class GameScene {
     tableGroup.add(glass);
     tableGroup.add(straw);
 
-    tableGroup.position.set(x, 0, z);
+    tableGroup.position.set(x, 0.14, z);
     return tableGroup;
   }
 

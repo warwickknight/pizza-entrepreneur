@@ -173,8 +173,7 @@ Stall Polish    Labor Rota,     Supply Chain    Work-Life       Tactile Immersio
   * [x] Correct vehicle forward orientation heading North with rotating 3D wheels, headlights, brake lights, and friendly/angry car horn audio effects.
   * [x] Cars enter from South, stop at side service window counter ($x = -11.2, z = 1.5$), and drive off behind the pizza place towards the back.
   * [x] Large batch orders (2 to 4 pizzas), 80% contactless card checkout, and combo drink tips.
-  * [x] Dual-service fulfillment: Owner can serve drive-thru cars directly at the side counter, or hire a dedicated Drive-Thru Server ($60, $0.12/s wage) with full Rota schedule management.
-  * [x] Stock replenishment table and Assistant Manager relocated behind the stone oven ($x = -6.5, z = -6.2$) to clear the western service corridor.
+  * [x] Stock replenishment table and Assistant Manager positioned to the right of the pizza box station ($x = 3.2, z = -4.5$) with spacious access.
   * [x] Realistic capital finance: Pizzeria starts with -$10,000 upfront investment bank loan; commercial loans ($2,000) and micro-loans ($500) available at the ATM to fund venue expansions.
 * [ ] **Tier 3: Pizza Van Expansion (Mobile Fleet):**
   * Buy a mobile food truck/van that can be parked beside the stall or dispatched.

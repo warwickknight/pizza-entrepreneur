@@ -913,8 +913,8 @@ class GameScene {
     signMesh.position.set(0, 1.02, 0.87);
     group.add(signMesh);
 
-    // Position the supply box safely behind the oven
-    group.position.set(-6.5, 0.12, -6.2);
+    // Position the supply box / ingredients store to the right of the pizza box station
+    group.position.set(3.2, 0.12, -4.5);
     this.scene.add(group);
     return group;
   }

@@ -193,9 +193,9 @@ function unlockTerrace() {
   applyTerrace();
 }
 
-// Phase 2: Supply Chain Restock Pad (Positioned safely behind the oven)
+// Phase 2: Supply Chain Restock Pad (Positioned to the right of pizza box station)
 const supplyZone = createGroundZoneRing(gameScene.scene, 1.4, 0x10b981, "RESTOCK", "Supplies & Pallets", { popupOnStep: true });
-supplyZone.group.position.set(-6.5, 0, -5.0); // Directly in front of stock table behind oven
+supplyZone.group.position.set(3.2, 0, -3.2); // In front of ingredients store table
 
 // Phase 3: Rest Zone (Outdoor Park Bench on the Lawn · Recharges Energy & Coffee)
 const restZone = createGroundZoneRing(gameScene.scene, 1.4, 0xf59e0b, "TAKE BREAK", "Rest on Bench ⚡", { popupOnStep: true });
@@ -210,7 +210,7 @@ const hireCleanerZone = createGroundZoneRing(gameScene.scene, 1.4, 0x14b8a6, "HI
 hireCleanerZone.group.position.set(8.2, 0, 1.2);
 
 const hireManagerZone = createGroundZoneRing(gameScene.scene, 1.4, 0x6366f1, "HIRE MANAGER", "$90 · Auto Stock 📋", { popupOnStep: true });
-hireManagerZone.group.position.set(-4.8, 0, -6.2); // Standing next to stock table behind oven
+hireManagerZone.group.position.set(4.6, 0, -4.5); // Standing next to ingredients store
 
 // Tier 2: Drive-Through Expansion Zone & Side Window ($10,000)
 const unlockDriveThruZone = createGroundZoneRing(gameScene.scene, 1.4, 0xeab308, "DRIVE-THRU", "$10,000 · Road Lane 🚗", { popupOnStep: true });
@@ -272,7 +272,7 @@ function updateZonePopupVisibility(playerPos) {
 // Instantiate 3D In-World Physical Props
 const physicalClipboard = gameScene.createClipboardProp(); // Small desk & clipboard at (-5.6, 0.12, -5.5)
 const physicalChalkboard = gameScene.createChalkboardProp();
-const physicalPallet = gameScene.createSupplyPalletMeshes(); // Supply box table at (-8.0, 0.12, -2.0)
+const physicalPallet = gameScene.createSupplyPalletMeshes(); // Ingredients store table at (3.2, 0.12, -4.5)
 const physicalGrassBench = gameScene.createOutdoorGrassBenchMesh(); // Out on the lawn at (13.0, 0.02, 4.8)
 const physicalAtm = gameScene.createBankAtmProp();
 const physicalRubbishBin = gameScene.createRubbishBinMesh(9.4, 3.2);
@@ -809,8 +809,8 @@ function applyHiredManager() {
   if (working) {
     if (!hiredManager) {
       hiredManager = createChibiHuman(gameScene.scene, 0x312e81, 'cap');
-      hiredManager.root.position.set(-4.8, 0, -6.2);
-      hiredManager.root.rotation.y = -Math.PI / 2; // Facing the stock table behind the oven
+      hiredManager.root.position.set(4.6, 0, -4.5);
+      hiredManager.root.rotation.y = -Math.PI / 2; // Facing the ingredients store table
       hiredManager.checkTimer = 0;
     } else {
       hiredManager.root.visible = true;
@@ -1036,8 +1036,8 @@ function animate(now) {
     { minX: -1.2, maxX: 1.2, minZ: -5.5, maxZ: -3.5 },
     // Service Counter: x: 0, z: 3.2, size: 6.8 x 1.6
     { minX: -3.6, maxX: 3.6, minZ: 2.2, maxZ: 4.2 },
-    // Supply Table (Behind Oven): x: -6.5, z: -6.2, size: 1.8 x 1.8
-    { minX: -7.5, maxX: -5.5, minZ: -7.2, maxZ: -5.3 },
+    // Ingredients Store Table (Right of Box Station): x: 3.2, z: -4.5, size: 1.8 x 1.8
+    { minX: 2.1, maxX: 4.3, minZ: -5.5, maxZ: -3.5 },
     // Low back wall
     { minX: -10, maxX: 10, minZ: -8.5, maxZ: -7.1 },
     // Park Rest Bench on Lawn: x: 13.0, z: 4.8

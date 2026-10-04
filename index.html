@@ -205,25 +205,11 @@
         <span id="day-badge" class="font-extrabold text-amber-300">Mon (W1 D1)</span>
       </div>
 
-      <button id="btn-loan" title="Micro-Loans & Debt Servicing" class="px-3 py-2 bg-slate-900/95 hover:bg-slate-800 active:scale-95 text-teal-300 font-fredoka font-bold text-xs rounded-xl shadow-xl border-2 border-teal-500/60 backdrop-blur-md flex items-center gap-1.5 transition">
-        <span>🏦</span> <span>Bank</span>
-      </button>
-
-      <button id="btn-supply" title="Order Ingredients & Manage Supply Chain" class="px-3 py-2 bg-slate-900/95 hover:bg-slate-800 active:scale-95 text-emerald-300 font-fredoka font-bold text-xs rounded-xl shadow-xl border-2 border-emerald-500/60 backdrop-blur-md flex items-center gap-1.5 transition">
-        <span>📦</span> <span>Supplies</span>
-      </button>
 
       <button id="btn-pricing" title="Menu Pricing & Elasticity" class="px-3 py-2 bg-slate-900/95 hover:bg-slate-800 active:scale-95 text-amber-300 font-fredoka font-bold text-xs rounded-xl shadow-xl border-2 border-amber-500/60 backdrop-blur-md flex items-center gap-1.5 transition">
         <span>💲</span> <span id="hud-price-tag" class="font-extrabold">$16.00</span>
       </button>
 
-      <button id="btn-rota" title="Manage Staff Shifts" class="px-3 py-2 bg-slate-900/95 hover:bg-slate-800 active:scale-95 text-purple-300 font-fredoka font-bold text-xs rounded-xl shadow-xl border-2 border-purple-500/60 backdrop-blur-md flex items-center gap-1.5 transition">
-        <span>📋</span> <span>Rota</span>
-      </button>
-
-      <button id="btn-marketing" title="Launch Ad Campaigns" class="px-3 py-2 bg-slate-900/95 hover:bg-slate-800 active:scale-95 text-sky-300 font-fredoka font-bold text-xs rounded-xl shadow-xl border-2 border-sky-500/60 backdrop-blur-md flex items-center gap-1.5 transition">
-        <span>📢</span> <span>Ads</span>
-      </button>
 
       <button id="btn-pl" class="px-3 py-2 bg-slate-900/95 hover:bg-slate-800 active:scale-95 text-yellow-300 font-fredoka font-bold text-xs rounded-xl shadow-xl border-2 border-yellow-500/60 backdrop-blur-md flex items-center gap-1.5 transition">
         <span>📊</span> <span>P&amp;L</span>
@@ -254,14 +240,9 @@
   <!-- Bottom Staff & Control Badges -->
   <footer class="absolute bottom-3 inset-x-3 z-30 pointer-events-none flex justify-between items-end">
     <div class="pointer-events-auto bg-slate-900/80 backdrop-blur-md border border-slate-800 text-[10px] text-slate-300 px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-2">
-      <span>🕹️ Move Chef</span>
       <span id="campaign-badge" class="hidden px-2 py-0.5 bg-sky-500/20 text-sky-300 border border-sky-400/30 rounded font-bold animate-pulse">📢 Promo Active</span>
     </div>
 
-    <div id="staff-roster" class="pointer-events-auto flex gap-1 text-[11px]">
-      <span id="badge-chef" class="bg-purple-950/80 border border-purple-500/40 text-purple-300 px-2 py-1 rounded-xl shadow hidden font-medium">👨‍🍳 Chef Active</span>
-      <span id="badge-server" class="bg-pink-950/80 border border-pink-500/40 text-pink-300 px-2 py-1 rounded-xl shadow hidden font-medium">🛎️ Server Active</span>
-    </div>
   </footer>
 
   <!-- Phase 2: Supply Chain & Restock Modal -->
@@ -449,7 +430,7 @@
   </div>
 
   <!-- Phase 3: End-of-Shift Founder Dilemma Modal (High Contrast & z-index fix) -->
-  <div id="dilemma-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md p-4 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
+  <div id="dilemma-modal" class="fixed inset-0 z-[70] bg-black/85 backdrop-blur-md p-4 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
     <div class="bg-slate-900 border-2 border-amber-400 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4">
       <div class="flex items-center gap-3 pb-3 border-b border-slate-700">
         <span id="dilemma-icon" class="text-3xl">🎭</span>

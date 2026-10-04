@@ -463,6 +463,7 @@
 
   let activeDilemma = null;
   function triggerEndShiftDilemma() {
+    if (isModalOpen(dilemmaModal)) return;
     const d = DILEMMAS[Math.floor(Math.random() * DILEMMAS.length)];
     activeDilemma = d;
 
@@ -487,6 +488,7 @@
   }
 
   function resolveDilemma(choice) {
+    if (!isModalOpen(dilemmaModal)) return;
     if (!activeDilemma) activeDilemma = DILEMMAS[0];
     const opt = choice === 'A' ? activeDilemma.optA : activeDilemma.optB;
 
@@ -507,18 +509,18 @@
   }
   window.resolveDilemma = resolveDilemma;
 
-  if (btnOptA) {
-    btnOptA.onclick = (e) => {
-      if (e) e.stopPropagation();
-      resolveDilemma('A');
-    };
-  }
-  if (btnOptB) {
-    btnOptB.onclick = (e) => {
-      if (e) e.stopPropagation();
-      resolveDilemma('B');
-    };
-  }
+  [[btnOptA, 'A'], [btnOptB, 'B']].forEach(([btn, choice]) => {
+    if (!btn) return;
+    btn.removeAttribute('onclick');
+    // pointerup/click both resolve; resolveDilemma ignores the second call once closed
+    ['pointerup', 'click'].forEach(evt => {
+      btn.addEventListener(evt, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        resolveDilemma(choice);
+      });
+    });
+  });
 
   // --- 7. Live P&L Statement Modal ---
   const plModal = document.getElementById('pl-modal');

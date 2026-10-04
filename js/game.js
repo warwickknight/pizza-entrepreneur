@@ -268,8 +268,6 @@ function applyHiredChef() {
   if (working) {
     updateZoneText(hireChefZone, "CHEF ON SHIFT", "Auto Baking");
     hireChefZone.ring.material.color.setHex(0x581c87);
-    document.getElementById('badge-chef').classList.remove('hidden');
-    document.getElementById('badge-chef').innerText = "👨‍🍳 Chef On Shift";
 
     if (!hiredChef) {
       hiredChef = createChibiHuman(gameScene.scene, 0xffffff, 'chef');
@@ -281,7 +279,6 @@ function applyHiredChef() {
   } else {
     // Scheduled off today on rota!
     if (hiredChef) hiredChef.root.visible = false;
-    document.getElementById('badge-chef').classList.add('hidden');
     if (state.chefHired) {
       updateZoneText(hireChefZone, "CHEF DAY OFF", "Unscheduled on Rota");
       hireChefZone.ring.material.color.setHex(0x3b0764);
@@ -294,8 +291,6 @@ function applyHiredServer() {
   if (working) {
     updateZoneText(hireServerZone, "SERVER ON SHIFT", "Auto Serving");
     hireServerZone.ring.material.color.setHex(0x831843);
-    document.getElementById('badge-server').classList.remove('hidden');
-    document.getElementById('badge-server').innerText = "🛎️ Server On Shift";
 
     if (!hiredServer) {
       hiredServer = createChibiHuman(gameScene.scene, 0xdc2626, 'cap');
@@ -308,7 +303,6 @@ function applyHiredServer() {
   } else {
     // Scheduled off today on rota!
     if (hiredServer) hiredServer.root.visible = false;
-    document.getElementById('badge-server').classList.add('hidden');
     if (state.serverHired) {
       updateZoneText(hireServerZone, "SERVER DAY OFF", "Unscheduled on Rota");
       hireServerZone.ring.material.color.setHex(0x500724);

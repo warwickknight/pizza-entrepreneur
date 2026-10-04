@@ -148,7 +148,7 @@ buyTableZone.group.position.set(5.5, 0, -0.8);
 
 // Phase 2: Supply Chain Restock Pad (Supply Box Station - well clear of oven)
 const supplyZone = createGroundZoneRing(gameScene.scene, 1.4, 0x10b981, "RESTOCK", "Supplies & Pallets", { popupOnStep: true });
-supplyZone.group.position.set(-8.0, 0, -2.0);
+supplyZone.group.position.set(-5.9, 0, -1.8); // Just east of the supply table (collision box ends at x=-7.0)
 
 // Phase 3: Rest Zone (Outdoor Park Bench on the Lawn · Recharges Energy & Coffee)
 const restZone = createGroundZoneRing(gameScene.scene, 1.4, 0xf59e0b, "TAKE BREAK", "Rest on Bench ⚡", { popupOnStep: true });

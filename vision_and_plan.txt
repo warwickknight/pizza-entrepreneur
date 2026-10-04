@@ -161,19 +161,21 @@ Stall Polish    Labor Rota,     Supply Chain    Work-Life       Tactile Immersio
 #### Phase 5 & 6: Venue Scaling, Fleet & Production Deployment
 
 * [x] **Tier 1.5: Outdoor Garden Deck Expansion — [COMPLETED]:**
-  * [x] Raised timber decked flooring platform with rich cedar plank texture, perimeter fascia trim, and garden walkway step.
+  * [x] Unlocked as a major capital expansion ($2,000) with raised timber decked flooring platform, rich cedar plank texture, perimeter fascia trim, and garden walkway step.
   * [x] Four rustic timber pergola corner posts with carved brass caps, post lanterns, and glowing festoon fairy string lights.
   * [x] Outer perimeter planter boxes with colorful blooming flowers (geraniums, lavender).
-  * [x] Up to 4 buyable dining tables placed on the deck terrace ($35, $45, $60, $75).
+  * [x] Up to 4 buyable dining tables placed on the deck terrace ($250 each) to seat guests.
   * [x] Family dining behavior: child sits in the second bistro chair across from parent with animated dining gestures rather than standing under the table.
   * [x] Dine-in drink revenue +$3.50 per seated guest.
   * [x] Table mess and litter cleanup loop with cleaner table-rim approach.
-* [x] **Tier 2: Drive-Through Expansion — [COMPLETED]:**
-  * [x] Dedicated side roadway traffic lane along the western border ($x = -12.2$) with 3 car archetypes (Sedan, Family SUV/Minivan, Pickup Truck).
+* [x] **Tier 2: Drive-Through Expansion ($10,000) — [COMPLETED]:**
+  * [x] Dedicated side roadway traffic lane shifted west ($x = -14.2$) to provide spacious restaurant interior with 3 car archetypes (Sedan, Family SUV/Minivan, Pickup Truck).
   * [x] Correct vehicle forward orientation heading North with rotating 3D wheels, headlights, brake lights, and friendly/angry car horn audio effects.
-  * [x] Cars enter from South, stop at side service window counter ($x = -9.25, z = 1.5$), and drive off behind the pizza place towards the back.
+  * [x] Cars enter from South, stop at side service window counter ($x = -11.2, z = 1.5$), and drive off behind the pizza place towards the back.
   * [x] Large batch orders (2 to 4 pizzas), 80% contactless card checkout, and combo drink tips.
   * [x] Dual-service fulfillment: Owner can serve drive-thru cars directly at the side counter, or hire a dedicated Drive-Thru Server ($60, $0.12/s wage) with full Rota schedule management.
+  * [x] Stock replenishment table and Assistant Manager relocated behind the stone oven ($x = -6.5, z = -6.2$) to clear the western service corridor.
+  * [x] Realistic capital finance: Pizzeria starts with -$10,000 upfront investment bank loan; commercial loans ($2,000) and micro-loans ($500) available at the ATM to fund venue expansions.
 * [ ] **Tier 3: Pizza Van Expansion (Mobile Fleet):**
   * Buy a mobile food truck/van that can be parked beside the stall or dispatched.
   * Staff the van with extra cooks and send it off-site to Weekend Festivals, Football Matches, and Beach Events for large lump-sum payouts.

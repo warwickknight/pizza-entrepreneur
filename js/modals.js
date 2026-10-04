@@ -221,6 +221,9 @@
   const btnBorrowLoan = document.getElementById('btn-borrow-loan');
   const btnRepayLoan = document.getElementById('btn-repay-loan');
 
+  const btnBorrowCommercial = document.getElementById('btn-borrow-commercial');
+  const btnRepayLarge = document.getElementById('btn-repay-large');
+
   function openLoanModal() {
     if (window.audio) window.audio.init();
     updateLoanModalDisplay();
@@ -234,51 +237,67 @@
 
   function updateLoanModalDisplay() {
     const balEl = document.getElementById('loan-balance-display');
-    if (balEl) balEl.innerText = `$${state.loanPrincipal.toFixed(2)}`;
+    if (balEl) {
+      if (state.loanPrincipal > 0) {
+        balEl.innerText = `-$${state.loanPrincipal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      } else {
+        balEl.innerText = "$0.00";
+      }
+    }
   }
 
   if (btnLoan) btnLoan.addEventListener('click', openLoanModal);
   if (btnCloseLoan) btnCloseLoan.addEventListener('click', closeLoanModal);
 
-  if (btnBorrowLoan) {
-    btnBorrowLoan.addEventListener('click', () => {
-      state.cash += 200;
-      state.loanPrincipal += 200;
-      state.totalLoanBorrowed += 200;
-      gameState.save();
-      if (window.audio) window.audio.cashRegister();
+  function borrowAmount(amt, label) {
+    state.cash += amt;
+    state.loanPrincipal += amt;
+    state.totalLoanBorrowed += amt;
+    gameState.save();
+    if (window.audio) window.audio.cashRegister();
+    if (window.showFloatingText && window.player) {
+      window.showFloatingText(window.player.root.position, `+$${amt} ${label} DISBURSED!`, "#10b981");
+    }
+    updateLoanModalDisplay();
+  }
+
+  function repayAmount(amt) {
+    if (state.loanPrincipal <= 0) {
       if (window.showFloatingText && window.player) {
-        window.showFloatingText(window.player.root.position, "+$200 LOAN DISBURSED!", "#10b981");
+        window.showFloatingText(window.player.root.position, "No loan balance to repay!", "#94a3b8");
       }
-      updateLoanModalDisplay();
-    });
+      return;
+    }
+    const repayment = Math.min(amt, state.loanPrincipal);
+    if (state.cash < repayment) {
+      if (window.audio) window.audio.warningBuzz();
+      if (window.showFloatingText && window.player) {
+        window.showFloatingText(window.player.root.position, `Need $${repayment.toFixed(2)} to repay!`, "#ef4444");
+      }
+      return;
+    }
+    state.cash -= repayment;
+    state.loanPrincipal -= repayment;
+    gameState.save();
+    if (window.audio) window.audio.posCardTap();
+    if (window.showFloatingText && window.bankZone) {
+      window.showFloatingText(window.bankZone.group.position, `-$${repayment.toFixed(2)} Debt Paid!`, "#38bdf8");
+    }
+    updateLoanModalDisplay();
+  }
+
+  if (btnBorrowLoan) {
+    btnBorrowLoan.addEventListener('click', () => borrowAmount(500, "MICRO-LOAN"));
+  }
+  if (btnBorrowCommercial) {
+    btnBorrowCommercial.addEventListener('click', () => borrowAmount(2000, "COMMERCIAL LOAN"));
   }
 
   if (btnRepayLoan) {
-    btnRepayLoan.addEventListener('click', () => {
-      if (state.loanPrincipal <= 0) {
-        if (window.showFloatingText && window.player) {
-          window.showFloatingText(window.player.root.position, "No loan balance to repay!", "#94a3b8");
-        }
-        return;
-      }
-      const repayment = Math.min(50, state.loanPrincipal);
-      if (state.cash < repayment) {
-        if (window.audio) window.audio.warningBuzz();
-        if (window.showFloatingText && window.player) {
-          window.showFloatingText(window.player.root.position, `Need $${repayment.toFixed(2)} to repay!`, "#ef4444");
-        }
-        return;
-      }
-      state.cash -= repayment;
-      state.loanPrincipal -= repayment;
-      gameState.save();
-      if (window.audio) window.audio.posCardTap();
-      if (window.showFloatingText && window.bankZone) {
-        window.showFloatingText(window.bankZone.group.position, `-$${repayment.toFixed(2)} Debt Paid!`, "#38bdf8");
-      }
-      updateLoanModalDisplay();
-    });
+    btnRepayLoan.addEventListener('click', () => repayAmount(250));
+  }
+  if (btnRepayLarge) {
+    btnRepayLarge.addEventListener('click', () => repayAmount(1000));
   }
 
   // --- 4. Staff Rota Clipboard Modal ---

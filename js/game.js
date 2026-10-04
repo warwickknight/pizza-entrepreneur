@@ -149,13 +149,53 @@ const TABLE_SLOTS = [
   { id: 2, x: 11.2, z: 1.0,  chairX: 10.0, chairZ: 1.0,  occupied: false, dirty: false, mesh: null, messMesh: null },
   { id: 3, x: 15.0, z: 1.0,  chairX: 13.8, chairZ: 1.0,  occupied: false, dirty: false, mesh: null, messMesh: null },
 ];
-const TABLE_COSTS = [35, 45, 60, 75];
+const TABLE_COSTS = [250, 250, 250, 250];
 
-const buyTableZone = createGroundZoneRing(gameScene.scene, 1.4, 0x06b6d4, "BUY TABLE", "$35 · Garden Table #1", { popupOnStep: true });
+// Terrace Deck Unlock ($2,000) & Garden Tables ($250 each)
+const unlockTerraceZone = createGroundZoneRing(gameScene.scene, 1.4, 0x06b6d4, "TERRACE DECK", "$2,000 · Outdoor Seating ☀️", { popupOnStep: true });
+unlockTerraceZone.group.position.set(10.5, 0, 1.0);
 
-// Phase 2: Supply Chain Restock Pad (Supply Box Station - well clear of oven)
+const buyTableZone = createGroundZoneRing(gameScene.scene, 1.4, 0x06b6d4, "BUY TABLE", "$250 · Garden Table #1", { popupOnStep: true });
+buyTableZone.group.visible = false;
+if (buyTableZone.sprite) buyTableZone.sprite.visible = false;
+
+function applyTerrace() {
+  if (state.terraceUnlocked) {
+    if (unlockTerraceZone) {
+      unlockTerraceZone.group.visible = false;
+      if (unlockTerraceZone.sprite) unlockTerraceZone.sprite.visible = false;
+    }
+    if (gameScene.outdoorDeckGroup) {
+      gameScene.outdoorDeckGroup.visible = true;
+    }
+    applyPurchasedTables();
+  } else {
+    if (unlockTerraceZone) {
+      unlockTerraceZone.group.visible = true;
+      if (unlockTerraceZone.sprite) unlockTerraceZone.sprite.visible = true;
+    }
+    if (gameScene.outdoorDeckGroup) {
+      gameScene.outdoorDeckGroup.visible = false;
+    }
+    if (buyTableZone) {
+      buyTableZone.group.visible = false;
+      if (buyTableZone.sprite) buyTableZone.sprite.visible = false;
+    }
+  }
+}
+if (state.terraceUnlocked) applyTerrace();
+
+function unlockTerrace() {
+  state.terraceUnlocked = true;
+  gameState.save();
+  window.audio.upgradeFanfare();
+  showFloatingText(new THREE.Vector3(10.5, 1.2, 1.0), "☀️ TERRACE DECK UNLOCKED!", "#06b6d4");
+  applyTerrace();
+}
+
+// Phase 2: Supply Chain Restock Pad (Positioned safely behind the oven)
 const supplyZone = createGroundZoneRing(gameScene.scene, 1.4, 0x10b981, "RESTOCK", "Supplies & Pallets", { popupOnStep: true });
-supplyZone.group.position.set(-5.9, 0, -1.8); // Just east of the supply table (collision box ends at x=-7.0)
+supplyZone.group.position.set(-6.5, 0, -5.0); // Directly in front of stock table behind oven
 
 // Phase 3: Rest Zone (Outdoor Park Bench on the Lawn · Recharges Energy & Coffee)
 const restZone = createGroundZoneRing(gameScene.scene, 1.4, 0xf59e0b, "TAKE BREAK", "Rest on Bench ⚡", { popupOnStep: true });
@@ -170,14 +210,14 @@ const hireCleanerZone = createGroundZoneRing(gameScene.scene, 1.4, 0x14b8a6, "HI
 hireCleanerZone.group.position.set(8.2, 0, 1.2);
 
 const hireManagerZone = createGroundZoneRing(gameScene.scene, 1.4, 0x6366f1, "HIRE MANAGER", "$90 · Auto Stock 📋", { popupOnStep: true });
-hireManagerZone.group.position.set(-3.8, 0, -5.5);
+hireManagerZone.group.position.set(-4.8, 0, -6.2); // Standing next to stock table behind oven
 
-// Tier 2: Drive-Through Expansion Zone & Side Window
-const unlockDriveThruZone = createGroundZoneRing(gameScene.scene, 1.4, 0xeab308, "DRIVE-THRU", "$120 · Road Lane 🚗", { popupOnStep: true });
-unlockDriveThruZone.group.position.set(-7.5, 0, 0.2);
+// Tier 2: Drive-Through Expansion Zone & Side Window ($10,000)
+const unlockDriveThruZone = createGroundZoneRing(gameScene.scene, 1.4, 0xeab308, "DRIVE-THRU", "$10,000 · Road Lane 🚗", { popupOnStep: true });
+unlockDriveThruZone.group.position.set(-8.2, 0, 0.2);
 
 const hireDriveThruServerZone = createGroundZoneRing(gameScene.scene, 1.4, 0xf59e0b, "HIRE DT SERVER", "$60 · Auto-Serve 🏎️", { popupOnStep: true });
-hireDriveThruServerZone.group.position.set(-7.5, 0, 2.8);
+hireDriveThruServerZone.group.position.set(-8.2, 0, 2.8);
 hireDriveThruServerZone.group.visible = false;
 if (hireDriveThruServerZone.sprite) hireDriveThruServerZone.sprite.visible = false;
 
@@ -210,12 +250,12 @@ function unlockDriveThrough() {
   state.driveThruUnlocked = true;
   gameState.save();
   window.audio.upgradeFanfare();
-  showFloatingText(new THREE.Vector3(-7.5, 1.2, 0.2), "🚗 DRIVE-THRU OPEN!", "#eab308");
+  showFloatingText(new THREE.Vector3(-8.2, 1.2, 0.2), "🚗 DRIVE-THRU OPEN!", "#eab308");
   applyDriveThrough();
 }
 
-const allGroundZones = [zoneOrder, zoneCook, zonePickup, hireChefZone, hireServerZone, buyTableZone, supplyZone, restZone, bankZone, hireCleanerZone, hireManagerZone, unlockDriveThruZone, hireDriveThruServerZone];
-const popupZones = [hireChefZone, hireServerZone, buyTableZone, supplyZone, restZone, bankZone, hireCleanerZone, hireManagerZone, unlockDriveThruZone, hireDriveThruServerZone];
+const allGroundZones = [zoneOrder, zoneCook, zonePickup, hireChefZone, hireServerZone, unlockTerraceZone, buyTableZone, supplyZone, restZone, bankZone, hireCleanerZone, hireManagerZone, unlockDriveThruZone, hireDriveThruServerZone];
+const popupZones = [hireChefZone, hireServerZone, unlockTerraceZone, buyTableZone, supplyZone, restZone, bankZone, hireCleanerZone, hireManagerZone, unlockDriveThruZone, hireDriveThruServerZone];
 function updateZonePopupVisibility(playerPos) {
   popupZones.forEach(z => {
     if (z && z.sprite && z.popupOnStep) {
@@ -276,8 +316,8 @@ class DriveThruCar {
     this.color = colors[Math.floor(Math.random() * colors.length)];
 
     this.carGroup = gameScene.createCarMesh(this.type, this.color);
-    // Side drive-thru lane runs along x = -12.2 from South (z = 15) to North (z = -18).
-    this.carGroup.position.set(-12.2, 0, 15.0);
+    // Side drive-thru lane runs along x = -14.2 from South (z = 15) to North (z = -18).
+    this.carGroup.position.set(-14.2, 0, 15.0);
     // Car front is along local +X. With rotation.y = Math.PI / 2, local +X points North along -Z.
     this.carGroup.rotation.y = Math.PI / 2;
     gameScene.scene.add(this.carGroup);
@@ -286,7 +326,7 @@ class DriveThruCar {
     this.remainingPies = this.totalPies;
     this.state = 'approaching';
     this.speed = 8.5;
-    this.targetZ = 1.5; // Aligned with the side service counter at x = -9.25, z = 1.5
+    this.targetZ = 1.5; // Aligned with the side service counter at x = -11.2, z = 1.5
     this.patience = 28.0;
     this.maxPatience = 28.0;
     this.honked = false;
@@ -312,7 +352,7 @@ class DriveThruCar {
           window.audio.orderChit();
           state.orderTickets += this.totalPies;
           if (gameScene.chitMesh) gameScene.chitMesh.visible = true;
-          showFloatingText(new THREE.Vector3(-9.2, 1.4, 1.5), `Drive-Thru (${this.totalPies}x 🍕)`, "#facc15");
+          showFloatingText(new THREE.Vector3(-11.2, 1.4, 1.5), `Drive-Thru (${this.totalPies}x 🍕)`, "#facc15");
         }
       }
     } else if (this.state === 'waiting') {
@@ -392,7 +432,7 @@ function completeDriveThruOrder(sellerPos) {
   activeDriveThruCar.bubble.className = 'world-bubble bubble-done';
   activeDriveThruCar.bubble.innerHTML = '😋🚗💨';
   window.audio.carHorn();
-  const floatPos = new THREE.Vector3(-9.2, 1.4, 1.5);
+  const floatPos = new THREE.Vector3(-11.2, 1.4, 1.5);
   if (isCard) {
     window.audio.posCardTap();
     showFloatingText(floatPos, `+$${netCash.toFixed(2)} (Drive-Thru Card!)`, "#10b981");
@@ -580,7 +620,7 @@ function applyPurchasedTables() {
       gameScene.scene.add(slot.mesh);
     }
   }
-  if (state.tablesCount >= 4) {
+  if (!state.terraceUnlocked || state.tablesCount >= 4) {
     buyTableZone.group.visible = false;
     if (buyTableZone.sprite) buyTableZone.sprite.visible = false;
   } else {
@@ -769,7 +809,8 @@ function applyHiredManager() {
   if (working) {
     if (!hiredManager) {
       hiredManager = createChibiHuman(gameScene.scene, 0x312e81, 'cap');
-      hiredManager.root.position.set(-3.8, 0, -5.5);
+      hiredManager.root.position.set(-4.8, 0, -6.2);
+      hiredManager.root.rotation.y = -Math.PI / 2; // Facing the stock table behind the oven
       hiredManager.checkTimer = 0;
     } else {
       hiredManager.root.visible = true;
@@ -988,15 +1029,15 @@ function animate(now) {
   // Collision Boundaries & Solid Obstacles (Stone oven, Prep table, Box table, Service counter, Supply table, Patio trim)
   const OBSTACLES = [
     // Stone Oven: x: -5.5, z: -4.5, base: 3.0 x 3.0
-    { minX: -7.2, maxX: -3.8, minZ: -6.2, maxZ: -2.8 },
+    { minX: -7.0, maxX: -4.0, minZ: -5.8, maxZ: -3.2 },
     // Prep Table: x: -2.5, z: -4.5, size: 2.2 x 1.6
     { minX: -3.8, maxX: -1.2, minZ: -5.5, maxZ: -3.5 },
     // Box table: x: 0, z: -4.5, size: 2.0 x 1.6
     { minX: -1.2, maxX: 1.2, minZ: -5.5, maxZ: -3.5 },
     // Service Counter: x: 0, z: 3.2, size: 6.8 x 1.6
     { minX: -3.6, maxX: 3.6, minZ: 2.2, maxZ: 4.2 },
-    // Supply Table: x: -8.0, z: -2.0, size: 1.8 x 1.8
-    { minX: -9.0, maxX: -7.0, minZ: -3.0, maxZ: -1.0 },
+    // Supply Table (Behind Oven): x: -6.5, z: -6.2, size: 1.8 x 1.8
+    { minX: -7.5, maxX: -5.5, minZ: -7.2, maxZ: -5.3 },
     // Low back wall
     { minX: -10, maxX: 10, minZ: -8.5, maxZ: -7.1 },
     // Park Rest Bench on Lawn: x: 13.0, z: 4.8
@@ -1186,9 +1227,9 @@ function animate(now) {
     }
   }
 
-  // Step 4B: Drive-Through Service Point Delivery (Side Counter at x = -8.5, z = 1.5)
-  const distToDriveThru = Math.hypot(pPos.x - (-8.5), pPos.z - 1.5);
-  if (state.driveThruUnlocked && distToDriveThru < 1.5 && state.playerCarrying > 0 && activeDriveThruCar && activeDriveThruCar.state === 'waiting') {
+  // Step 4B: Drive-Through Service Point Delivery (Side Counter at x = -11.2, z = 1.5)
+  const distToDriveThru = Math.hypot(pPos.x - (-10.2), pPos.z - 1.5);
+  if (state.driveThruUnlocked && distToDriveThru < 1.6 && state.playerCarrying > 0 && activeDriveThruCar && activeDriveThruCar.state === 'waiting') {
     state.playerCarrying--;
     updatePlayerStackVisual();
     activeDriveThruCar.remainingPies--;
@@ -1197,27 +1238,50 @@ function animate(now) {
       completeDriveThruOrder(pPos);
     } else {
       window.audio.boxPickup();
-      showFloatingText(new THREE.Vector3(-8.8, 1.4, 1.5), `1 Loaded (${activeDriveThruCar.remainingPies} left)`, "#38bdf8");
+      showFloatingText(new THREE.Vector3(-11.2, 1.4, 1.5), `1 Loaded (${activeDriveThruCar.remainingPies} left)`, "#38bdf8");
     }
   }
 
-  // UPGRADE: UNLOCK DRIVE-THRU ($120)
+  // UPGRADE: UNLOCK DRIVE-THRU ($10,000)
   const distToUnlockDriveThru = (!state.driveThruUnlocked && unlockDriveThruZone) ? pPos.distanceTo(unlockDriveThruZone.group.position) : 999;
   if (!state.driveThruUnlocked && distToUnlockDriveThru < 1.4) {
-    if (state.cash >= 120) {
+    if (state.cash >= 10000) {
       state.actionProgress += dt / 1.5;
       updateActionRing(state.actionProgress, pPos);
       if (state.actionProgress >= 1) {
         state.actionProgress = 0;
         updateActionRing(0, pPos);
-        state.cash -= 120;
+        state.cash -= 10000;
         unlockDriveThrough();
       }
     } else {
       updateActionRing(0, pPos);
       if (chefWarnCooldown <= 0) {
-        const needed = (120 - state.cash).toFixed(2);
+        const needed = (10000 - state.cash).toFixed(2);
         showFloatingText(unlockDriveThruZone.group.position, `Need $${needed} more!`, "#ef4444");
+        window.audio.warningBuzz();
+        chefWarnCooldown = 2.5;
+      }
+    }
+  }
+
+  // UPGRADE: UNLOCK TERRACE ($2,000)
+  const distToUnlockTerrace = (!state.terraceUnlocked && unlockTerraceZone) ? pPos.distanceTo(unlockTerraceZone.group.position) : 999;
+  if (!state.terraceUnlocked && distToUnlockTerrace < 1.4) {
+    if (state.cash >= 2000) {
+      state.actionProgress += dt / 1.5;
+      updateActionRing(state.actionProgress, pPos);
+      if (state.actionProgress >= 1) {
+        state.actionProgress = 0;
+        updateActionRing(0, pPos);
+        state.cash -= 2000;
+        unlockTerrace();
+      }
+    } else {
+      updateActionRing(0, pPos);
+      if (chefWarnCooldown <= 0) {
+        const needed = (2000 - state.cash).toFixed(2);
+        showFloatingText(unlockTerraceZone.group.position, `Need $${needed} more!`, "#ef4444");
         window.audio.warningBuzz();
         chefWarnCooldown = 2.5;
       }
@@ -1291,9 +1355,9 @@ function animate(now) {
     }
   }
 
-  // UPGRADE: BUY DINING TABLE (Up to 4 tables)
-  const distToBuyTable = (state.tablesCount < 4 && buyTableZone) ? pPos.distanceTo(buyTableZone.group.position) : 999;
-  if (state.tablesCount < 4) {
+  // UPGRADE: BUY DINING TABLE ($250 each, up to 4 tables)
+  const distToBuyTable = (state.terraceUnlocked && state.tablesCount < 4 && buyTableZone) ? pPos.distanceTo(buyTableZone.group.position) : 999;
+  if (state.terraceUnlocked && state.tablesCount < 4) {
     const currentCost = TABLE_COSTS[state.tablesCount];
     if (distToBuyTable < 1.4) {
       if (state.cash >= currentCost) {
@@ -1416,7 +1480,7 @@ function animate(now) {
   }
 
   // Reset ring if moved off any station
-  if (distToOrderZone >= 1.3 && distToCookZone >= 1.4 && distToHireChef >= 1.4 && distToHireServer >= 1.4 && distToBuyTable >= 1.4 && distToSupply >= 1.4 && distToRest >= 1.4 && distToBank >= 1.4 && distToHireCleaner >= 1.4 && distToHireManager >= 1.4 && distToUnlockDriveThru >= 1.4 && distToHireDtServer >= 1.4) {
+  if (distToOrderZone >= 1.3 && distToCookZone >= 1.4 && distToHireChef >= 1.4 && distToHireServer >= 1.4 && distToBuyTable >= 1.4 && distToSupply >= 1.4 && distToRest >= 1.4 && distToBank >= 1.4 && distToHireCleaner >= 1.4 && distToHireManager >= 1.4 && distToUnlockDriveThru >= 1.4 && distToHireDtServer >= 1.4 && distToUnlockTerrace >= 1.4) {
     if (state.actionProgress > 0) {
       state.actionProgress = 0;
       updateActionRing(0, pPos);
@@ -1714,7 +1778,7 @@ function animate(now) {
       state.dailyWages += state.driveThruServerWagePerSec * dt;
     }
 
-    const windowStandPos = new THREE.Vector3(-8.2, 0, 1.5);
+    const windowStandPos = new THREE.Vector3(-10.0, 0, 1.5);
     const tableDest = new THREE.Vector3(0, 0, -3.2);
 
     // Check how many boxes are currently claimed by counter server
@@ -1760,7 +1824,7 @@ function animate(now) {
             completeDriveThruOrder(hiredDriveThruServer.root.position);
           } else {
             window.audio.boxPickup();
-            showFloatingText(new THREE.Vector3(-8.8, 1.4, 1.5), `Server Loaded (${activeDriveThruCar.remainingPies} left)`, "#38bdf8");
+            showFloatingText(new THREE.Vector3(-11.2, 1.4, 1.5), `Server Loaded (${activeDriveThruCar.remainingPies} left)`, "#38bdf8");
           }
           hiredDriveThruServer.state = 'idle';
         } else {

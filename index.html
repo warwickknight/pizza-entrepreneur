@@ -387,32 +387,48 @@
 
       <!-- Outstanding Debt Card -->
       <div class="bg-slate-950 rounded-2xl p-4 border border-slate-800 space-y-2 text-center">
-        <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Outstanding Debt Balance</div>
-        <div id="loan-balance-display" class="font-fredoka text-3xl font-bold text-rose-400">$0.00</div>
-        <div class="text-[10px] text-slate-400 font-mono">Daily Interest: <b class="text-rose-300">8.0% per shift</b> (Deducted each morning)</div>
+        <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Outstanding Bank Debt</div>
+        <div id="loan-balance-display" class="font-fredoka text-3xl font-bold text-rose-400">-$10,000.00</div>
+        <div class="text-[10px] text-slate-400 font-mono">Daily Interest: <b class="text-rose-300">0.5% per shift</b> (Deducted each morning)</div>
       </div>
 
       <div class="space-y-2.5 text-xs">
-        <!-- Borrow $200 Micro-Loan -->
+        <!-- Borrow $500 Working Capital -->
         <div class="p-3 bg-slate-950 border border-teal-500/30 rounded-2xl flex justify-between items-center gap-2">
           <div>
-            <div class="font-bold text-teal-300">💵 Take $200 Micro-Loan</div>
-            <div class="text-[10px] text-slate-400">Instant capital to hire staff or bulk restock</div>
+            <div class="font-bold text-teal-300">💵 Micro-Loan ($500)</div>
+            <div class="text-[10px] text-slate-400">Working capital for inventory &amp; wages</div>
           </div>
-          <button id="btn-borrow-loan" class="px-3.5 py-2 bg-teal-600 hover:bg-teal-500 active:scale-95 text-slate-950 font-fredoka font-bold rounded-xl text-xs shadow whitespace-nowrap">
-            Borrow $200
+          <button id="btn-borrow-loan" class="px-3.5 py-2 bg-teal-600 hover:bg-teal-500 active:scale-95 text-slate-950 font-fredoka font-bold rounded-xl text-xs shadow whitespace-nowrap cursor-pointer">
+            Borrow $500
+          </button>
+        </div>
+
+        <!-- Borrow $2,000 Commercial Expansion -->
+        <div class="p-3 bg-slate-950 border border-teal-500/30 rounded-2xl flex justify-between items-center gap-2">
+          <div>
+            <div class="font-bold text-teal-300">🏗️ Commercial Loan ($2,000)</div>
+            <div class="text-[10px] text-slate-400">Finance Terrace or Drive-Thru expansion</div>
+          </div>
+          <button id="btn-borrow-commercial" class="px-3.5 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 active:scale-95 text-slate-950 font-fredoka font-bold rounded-xl text-xs shadow whitespace-nowrap cursor-pointer">
+            Borrow $2,000
           </button>
         </div>
 
         <!-- Repay Debt -->
         <div class="p-3 bg-slate-950 border border-slate-800 rounded-2xl flex justify-between items-center gap-2">
           <div>
-            <div class="font-bold text-slate-200">💳 Repay Principal ($50)</div>
-            <div class="text-[10px] text-slate-400">Pay down debt to eliminate daily interest fees</div>
+            <div class="font-bold text-slate-200">💳 Repay Debt</div>
+            <div class="text-[10px] text-slate-400">Pay down principal to reduce shift interest</div>
           </div>
-          <button id="btn-repay-loan" class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 active:scale-95 text-white font-fredoka font-bold rounded-xl text-xs shadow whitespace-nowrap">
-            Pay $50
-          </button>
+          <div class="flex gap-1.5">
+            <button id="btn-repay-loan" class="px-2.5 py-2 bg-emerald-800 hover:bg-emerald-700 active:scale-95 text-white font-fredoka font-bold rounded-xl text-xs shadow whitespace-nowrap cursor-pointer">
+              Pay $250
+            </button>
+            <button id="btn-repay-large" class="px-2.5 py-2 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-fredoka font-bold rounded-xl text-xs shadow whitespace-nowrap cursor-pointer">
+              Pay $1,000
+            </button>
+          </div>
         </div>
       </div>
 

@@ -130,9 +130,12 @@
         stepDesc.innerText = "Step on Purple Circle to Hire Chef ($45)!";
       }
     } else if (state.chefHired && !state.serverHired) {
-      if (state.cash >= 35 && !state.tablePurchased) {
-        stepBadge.innerText = "UPGRADE";
-        stepDesc.innerText = "Buy Dining Table ($35) for Dine-In Drink Profits!";
+      if (!state.terraceUnlocked) {
+        stepBadge.innerText = "EXPAND";
+        stepDesc.innerText = "Unlock Terrace Deck ($2,000) for high-margin dine-in drinks!";
+      } else if (state.tablesCount === 0) {
+        stepBadge.innerText = "DINE-IN";
+        stepDesc.innerText = "Buy Terrace Table ($250) to seat guests!";
       } else if (state.cash >= 60) {
         stepBadge.innerText = "SCALE";
         stepDesc.innerText = "Step on Pink Circle to Hire Server ($60)!";
@@ -141,12 +144,18 @@
         stepDesc.innerText = "Chef is cooking! You focus on serving.";
       }
     } else {
-      if (!state.tablePurchased) {
+      if (!state.terraceUnlocked) {
+        stepBadge.innerText = "EXPAND";
+        stepDesc.innerText = "Unlock Terrace Deck ($2,000) to boost beverage margins!";
+      } else if (state.tablesCount === 0) {
         stepBadge.innerText = "DINE-IN";
-        stepDesc.innerText = "Unlock Terrace Table ($35) to boost margins with drinks!";
+        stepDesc.innerText = "Buy Terrace Table ($250) to start seating guests!";
+      } else if (!state.driveThruUnlocked) {
+        stepBadge.innerText = "DRIVE-THRU";
+        stepDesc.innerText = "Save up for Drive-Thru Expansion ($10,000)!";
       } else {
-        stepBadge.innerText = "PATIO PIZZERIA";
-        stepDesc.innerText = "Automated kitchen + Terrace dining active!";
+        stepBadge.innerText = "PIZZERIA EMPIRE";
+        stepDesc.innerText = "Counter, Terrace Dining & Drive-Thru fully operational!";
       }
     }
   }

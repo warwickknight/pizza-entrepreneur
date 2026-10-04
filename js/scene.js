@@ -199,7 +199,10 @@ class GameScene {
     this.scene.add(trimFront);
 
     // Outdoor Garden Decked Seating Terrace
-    this.setupOutdoorDeck();
+    this.outdoorDeckGroup = this.setupOutdoorDeck();
+    if (this.outdoorDeckGroup && window.state && !window.state.terraceUnlocked) {
+      this.outdoorDeckGroup.visible = false;
+    }
 
     // Rustic back low wall & warm lanterns
     const darkWoodMat = new THREE.MeshStandardMaterial({ color: 0x3d1a08, roughness: 0.85 });
@@ -910,8 +913,8 @@ class GameScene {
     signMesh.position.set(0, 1.02, 0.87);
     group.add(signMesh);
 
-    // Position the supply box safely away from the oven opening (west wall area)
-    group.position.set(-8.0, 0.12, -2.0);
+    // Position the supply box safely behind the oven
+    group.position.set(-6.5, 0.12, -6.2);
     this.scene.add(group);
     return group;
   }
@@ -1198,24 +1201,24 @@ class GameScene {
     const redMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.4 });
     const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
 
-    // 1. Dark Asphalt Side Drive-Thru Lane (runs from South z=14 to North z=-18 along x=-12.2)
-    const sideLane = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 34), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9 }));
+    // 1. Dark Asphalt Side Drive-Thru Lane (shifted further west to x=-14.2 to provide ample space)
+    const sideLane = new THREE.Mesh(new THREE.PlaneGeometry(4.8, 34), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9 }));
     sideLane.rotation.x = -Math.PI / 2;
-    sideLane.position.set(-12.2, 0.02, -1.0);
+    sideLane.position.set(-14.2, 0.02, -1.0);
     sideLane.receiveShadow = true;
     group.add(sideLane);
 
     // Yellow outer guideline
     const edgeLine = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 34), yellowGlow);
     edgeLine.rotation.x = -Math.PI / 2;
-    edgeLine.position.set(-14.3, 0.03, -1.0);
+    edgeLine.position.set(-16.5, 0.03, -1.0);
     edgeLine.receiveShadow = true;
     group.add(edgeLine);
 
     // White stop bar at service window (z=1.5)
-    const stopLine = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 0.55), whiteMat);
+    const stopLine = new THREE.Mesh(new THREE.PlaneGeometry(4.2, 0.55), whiteMat);
     stopLine.rotation.x = -Math.PI / 2;
-    stopLine.position.set(-12.2, 0.03, 1.5);
+    stopLine.position.set(-14.2, 0.03, 1.5);
     stopLine.receiveShadow = true;
     group.add(stopLine);
 
@@ -1223,17 +1226,17 @@ class GameScene {
     [-5.0, 7.5].forEach(az => {
       const shaft = new THREE.Mesh(new THREE.PlaneGeometry(0.35, 1.8), whiteMat);
       shaft.rotation.x = -Math.PI / 2;
-      shaft.position.set(-12.2, 0.03, az);
+      shaft.position.set(-14.2, 0.03, az);
       group.add(shaft);
       const head = new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.9, 3), whiteMat);
       head.rotation.x = -Math.PI / 2;
-      head.position.set(-12.2, 0.03, az - 1.2);
+      head.position.set(-14.2, 0.03, az - 1.2);
       group.add(head);
     });
 
-    // 2. Illuminated Drive-Thru Menu & Intercom Pillar (Lane entry at south: x=-13.8, z=9.0 facing South)
+    // 2. Illuminated Drive-Thru Menu & Intercom Pillar (Lane entry at south: x=-15.8, z=9.0 facing South)
     const pillar = new THREE.Group();
-    pillar.position.set(-13.8, 0, 9.0);
+    pillar.position.set(-15.8, 0, 9.0);
 
     const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 2.4, 12), metalMat);
     post.position.y = 1.2;
@@ -1257,9 +1260,18 @@ class GameScene {
 
     group.add(pillar);
 
-    // 3. Side Service Window Counter & Striped Canopy on western patio border (x=-9.25, z=1.5)
+    // Paved Service Bay Connector Platform (bridges main patio x=-9.25 out to service counter x=-11.2)
+    const connectorPlatform = new THREE.Mesh(
+      new THREE.BoxGeometry(2.4, 0.22, 5.0),
+      new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.6 })
+    );
+    connectorPlatform.position.set(-10.25, 0.11, 1.5);
+    connectorPlatform.receiveShadow = true;
+    group.add(connectorPlatform);
+
+    // 3. Side Service Window Counter & Striped Canopy (positioned at x=-11.2, z=1.5)
     const serviceBay = new THREE.Group();
-    serviceBay.position.set(-9.25, 0, 1.5);
+    serviceBay.position.set(-11.2, 0, 1.5);
 
     // Stainless steel counter shelf facing west
     const shelf = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.14, 2.5), metalMat);

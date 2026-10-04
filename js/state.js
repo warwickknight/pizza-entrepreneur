@@ -21,6 +21,7 @@ const defaultState = {
   cleanerWagePerSec: 0.08,
   managerHired: false,
   managerWagePerSec: 0.16,
+  terraceUnlocked: false,
   driveThruUnlocked: false,
   driveThruServerHired: false,
   driveThruServerWagePerSec: 0.12,
@@ -68,10 +69,10 @@ const defaultState = {
   founderEnergy: 100,      // 0 to 100%
   maxEnergy: 100,
   familyMorale: 80,        // 0 to 100%
-  loanPrincipal: 0,        // Outstanding bank debt
-  loanDailyInterestRate: 0.08, // 8% daily interest
+  loanPrincipal: 10000,    // Starter bank debt ($10,000 upfront investment for premises & equipment)
+  loanDailyInterestRate: 0.005, // 0.5% daily interest (~$50/shift)
   totalDebtInterestPaid: 0,
-  totalLoanBorrowed: 0,
+  totalLoanBorrowed: 10000,
   breakRestTimer: 0,       // Resting on bench/rest pad
 
   costPerPizza: 3.50, // standard baseline unit COGS
@@ -131,6 +132,7 @@ class GameState {
           hasRefrigeration: parsed.hasRefrigeration || false,
           tablesCount: parsed.tablesCount !== undefined ? Math.min(4, Math.max(0, parsed.tablesCount)) : (parsed.tablePurchased ? 1 : 0),
           tablePurchased: (parsed.tablesCount !== undefined ? parsed.tablesCount > 0 : !!parsed.tablePurchased),
+          terraceUnlocked: parsed.terraceUnlocked !== undefined ? parsed.terraceUnlocked : (parsed.tablesCount > 0 || parsed.tablePurchased || false),
           driveThruUnlocked: parsed.driveThruUnlocked || false,
           founderEnergy: parsed.founderEnergy !== undefined ? parsed.founderEnergy : 100,
           familyMorale: parsed.familyMorale !== undefined ? parsed.familyMorale : 80,
@@ -172,6 +174,7 @@ class GameState {
         serverHired: this.data.serverHired,
         tablePurchased: this.data.tablesCount > 0,
         tablesCount: this.data.tablesCount,
+        terraceUnlocked: this.data.terraceUnlocked,
         driveThruUnlocked: this.data.driveThruUnlocked,
         chefRota: this.data.chefRota,
         serverRota: this.data.serverRota,

@@ -265,7 +265,9 @@ class Customer {
       }
       this.setMoodBubble('🔥' + '🍕'.repeat(this.remainingPies));
     } else if (this.state === 'walk_to_table') {
-      const tableChairPos = new THREE.Vector3(4.3, 0, -0.8);
+      const chairX = this.tableSlot ? this.tableSlot.chairX : 10.0;
+      const chairZ = this.tableSlot ? this.tableSlot.chairZ : -3.2;
+      const tableChairPos = new THREE.Vector3(chairX, 0, chairZ);
       this.moveTowards(tableChairPos, 3.2, dt);
       if (this.char.root.position.distanceTo(tableChairPos) < 0.25) {
         this.state = 'eating_at_table';
@@ -288,11 +290,13 @@ class Customer {
         this.char.head.rotation.x = 0;
         this.bubble.className = 'world-bubble bubble-done';
         this.bubble.innerHTML = '😋';
-        window.tableOccupied = false; // Seat is free again, but the table is left messy
-        if (window.onTableMess) window.onTableMess();
+        if (this.tableSlot) {
+          this.tableSlot.occupied = false;
+          if (window.onTableMess) window.onTableMess(this.tableSlot);
+        }
       }
     } else if (this.state === 'leaving') {
-      const exitDest = new THREE.Vector3(14, 0, 7.5);
+      const exitDest = new THREE.Vector3(18.5, 0, 7.5);
       this.moveTowards(exitDest, 3.8, dt);
 
       // Takeaway customers sometimes drop litter on the way out
@@ -400,6 +404,9 @@ class Customer {
     if (this.bubble && this.bubble.parentNode) this.bubble.parentNode.removeChild(this.bubble);
     this.gameScene.scene.remove(this.char.root);
     if (this.child) this.gameScene.scene.remove(this.child.root);
+    if (this.tableSlot) {
+      this.tableSlot.occupied = false;
+    }
   }
 }
 

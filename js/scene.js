@@ -174,8 +174,8 @@ class GameScene {
     });
 
     // Street Curb & Roadway
-    const curb = new THREE.Mesh(new THREE.BoxGeometry(32, 0.45, 1.2), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.6 }));
-    curb.position.set(0, 0.22, 7.8);
+    const curb = new THREE.Mesh(new THREE.BoxGeometry(42, 0.45, 1.2), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.6 }));
+    curb.position.set(2.5, 0.22, 7.8);
     curb.receiveShadow = true;
     this.scene.add(curb);
 
@@ -295,7 +295,7 @@ class GameScene {
     this.scene.add(this.counterGroup);
   }
 
-  createDiningTableMesh() {
+  createDiningTableMesh(x = 5.5, z = -0.8) {
     const tableGroup = new THREE.Group();
     const woodMat = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.7 });
     const clothMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.6 }); // Red Italian bistro table
@@ -356,7 +356,7 @@ class GameScene {
     tableGroup.add(glass);
     tableGroup.add(straw);
 
-    tableGroup.position.set(5.5, 0, -0.8);
+    tableGroup.position.set(x, 0, z);
     return tableGroup;
   }
 
@@ -695,8 +695,8 @@ class GameScene {
     });
 
     // Positioned out on the emerald grass lawn
-    group.position.set(10.5, 0.02, 1.5);
-    group.rotation.y = -Math.PI / 2; // Facing back toward the patio
+    group.position.set(13.0, 0.02, 4.8);
+    group.rotation.y = 0; // Facing north toward the garden dining tables
     this.scene.add(group);
     return group;
   }

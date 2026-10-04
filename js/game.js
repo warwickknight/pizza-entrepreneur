@@ -142,9 +142,16 @@ hireChefZone.group.position.set(6.2, 0, -5.2);
 const hireServerZone = createGroundZoneRing(gameScene.scene, 1.4, 0xec4899, "HIRE SERVER", "$60 · Serves Cash", { popupOnStep: true });
 hireServerZone.group.position.set(6.2, 0, 4.2);
 
-// Expansion: Dining Table with drinks pad ($35)
-const buyTableZone = createGroundZoneRing(gameScene.scene, 1.4, 0x06b6d4, "BUY TABLE", "$35 · Dine-In & Drinks", { popupOnStep: true });
-buyTableZone.group.position.set(5.5, 0, -0.8);
+// Expansion: Garden Dining Tables on the lawn (Up to 4 tables)
+const TABLE_SLOTS = [
+  { id: 0, x: 11.2, z: -3.2, chairX: 10.0, chairZ: -3.2, occupied: false, dirty: false, mesh: null, messMesh: null },
+  { id: 1, x: 15.0, z: -3.2, chairX: 13.8, chairZ: -3.2, occupied: false, dirty: false, mesh: null, messMesh: null },
+  { id: 2, x: 11.2, z: 1.0,  chairX: 10.0, chairZ: 1.0,  occupied: false, dirty: false, mesh: null, messMesh: null },
+  { id: 3, x: 15.0, z: 1.0,  chairX: 13.8, chairZ: 1.0,  occupied: false, dirty: false, mesh: null, messMesh: null },
+];
+const TABLE_COSTS = [35, 45, 60, 75];
+
+const buyTableZone = createGroundZoneRing(gameScene.scene, 1.4, 0x06b6d4, "BUY TABLE", "$35 · Garden Table #1", { popupOnStep: true });
 
 // Phase 2: Supply Chain Restock Pad (Supply Box Station - well clear of oven)
 const supplyZone = createGroundZoneRing(gameScene.scene, 1.4, 0x10b981, "RESTOCK", "Supplies & Pallets", { popupOnStep: true });
@@ -152,7 +159,7 @@ supplyZone.group.position.set(-5.9, 0, -1.8); // Just east of the supply table (
 
 // Phase 3: Rest Zone (Outdoor Park Bench on the Lawn · Recharges Energy & Coffee)
 const restZone = createGroundZoneRing(gameScene.scene, 1.4, 0xf59e0b, "TAKE BREAK", "Rest on Bench ⚡", { popupOnStep: true });
-restZone.group.position.set(10.5, 0, 1.5);
+restZone.group.position.set(13.0, 0, 4.8);
 
 // Phase 3: Bank Micro-Loan ATM Zone
 const bankZone = createGroundZoneRing(gameScene.scene, 1.3, 0x14b8a6, "BANK ATM", "Loans & Debt 🏦", { popupOnStep: true });
@@ -174,20 +181,26 @@ function updateZonePopupVisibility(playerPos) {
 const physicalClipboard = gameScene.createClipboardProp(); // Small desk & clipboard at (-5.6, 0.12, -5.5)
 const physicalChalkboard = gameScene.createChalkboardProp();
 const physicalPallet = gameScene.createSupplyPalletMeshes(); // Supply box table at (-8.0, 0.12, -2.0)
-const physicalGrassBench = gameScene.createOutdoorGrassBenchMesh(); // Out on the lawn at (10.5, 0.02, 1.5)
+const physicalGrassBench = gameScene.createOutdoorGrassBenchMesh(); // Out on the lawn at (13.0, 0.02, 4.8)
 const physicalAtm = gameScene.createBankAtmProp();
 
-let diningTableMesh = null;
-window.tableOccupied = false;
-window.tableDirty = false;
+function getAvailableTableSlot() {
+  const count = state.tablesCount || (state.tablePurchased ? 1 : 0);
+  for (let i = 0; i < count; i++) {
+    const slot = TABLE_SLOTS[i];
+    if (!slot.occupied && !slot.dirty) {
+      return slot;
+    }
+  }
+  return null;
+}
+window.getAvailableTableSlot = getAvailableTableSlot;
 
-// --- Rubbish: dirty dining table + litter dropped by takeaway customers. Walk over it to clean up. ---
-const TABLE_POS = new THREE.Vector3(5.5, 0, -0.8);
+// --- Rubbish: dirty dining tables + litter dropped by takeaway customers. Walk over it to clean up. ---
 const litterItems = [];
-let tableMess = null;
 
-function buildTableMess() {
-  tableMess = new THREE.Group();
+function buildTableMessForSlot(slot) {
+  const mess = new THREE.Group();
   const plateMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.4 });
   const crustMat = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.8 });
   const cupMat = new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.5 });
@@ -196,30 +209,35 @@ function buildTableMess() {
   [[-0.55, 0.3], [0.1, -0.55]].forEach(([x, z]) => {
     const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.3, 0.04, 16), plateMat);
     plate.position.set(x, 1.19, z);
-    tableMess.add(plate);
+    plate.castShadow = true;
+    mess.add(plate);
     const crust = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.05, 0.1), crustMat);
     crust.position.set(x + 0.05, 1.24, z);
     crust.rotation.y = x * 3;
-    tableMess.add(crust);
+    mess.add(crust);
   });
   const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.07, 0.22, 10), cupMat);
   cup.position.set(0.65, 1.27, -0.2);
   cup.rotation.z = 1.2; // knocked over
-  tableMess.add(cup);
+  cup.castShadow = true;
+  mess.add(cup);
   [[0.45, 0.45], [-0.1, 0.75]].forEach(([x, z]) => {
     const ball = new THREE.Mesh(new THREE.IcosahedronGeometry(0.1, 0), napkinMat);
     ball.position.set(x, 1.24, z);
-    tableMess.add(ball);
+    mess.add(ball);
   });
-  tableMess.position.copy(TABLE_POS);
-  tableMess.position.y = 0;
-  gameScene.scene.add(tableMess);
+  mess.position.set(slot.x, 0, slot.z);
+  gameScene.scene.add(mess);
+  return mess;
 }
 
-window.onTableMess = function() {
-  if (!tableMess) buildTableMess();
-  tableMess.visible = true;
-  window.tableDirty = true;
+window.onTableMess = function(slot) {
+  if (!slot) return;
+  if (!slot.messMesh) {
+    slot.messMesh = buildTableMessForSlot(slot);
+  }
+  slot.messMesh.visible = true;
+  slot.dirty = true;
 };
 
 window.spawnLitter = function(pos) {
@@ -242,12 +260,16 @@ window.spawnLitter = function(pos) {
 };
 
 function updateRubbish(playerPos) {
-  if (window.tableDirty && tableMess && playerPos.distanceTo(TABLE_POS) < 1.9) {
-    tableMess.visible = false;
-    window.tableDirty = false;
-    window.audio.pop();
-    showFloatingText(TABLE_POS, "✨ Table Cleaned!", "#38bdf8");
-  }
+  TABLE_SLOTS.forEach(slot => {
+    if (slot.dirty && slot.messMesh && slot.messMesh.visible) {
+      if (Math.hypot(playerPos.x - slot.x, playerPos.z - slot.z) < 2.0) {
+        slot.messMesh.visible = false;
+        slot.dirty = false;
+        window.audio.pop();
+        showFloatingText(new THREE.Vector3(slot.x, 0, slot.z), "✨ Table Cleaned!", "#38bdf8");
+      }
+    }
+  });
   for (let i = litterItems.length - 1; i >= 0; i--) {
     const m = litterItems[i];
     if (Math.hypot(playerPos.x - m.position.x, playerPos.z - m.position.z) < 0.9) {
@@ -259,27 +281,41 @@ function updateRubbish(playerPos) {
   }
 }
 
-function applyPurchasedTable() {
-  updateZoneText(buyTableZone, "TERRACE DINING", "Open For Seating");
-  buyTableZone.ring.material.color.setHex(0x0369a1);
-  buyTableZone.group.visible = false; // Hide pad once bought so customers can sit freely
-
-  if (!diningTableMesh) {
-    diningTableMesh = gameScene.createDiningTableMesh();
-    gameScene.scene.add(diningTableMesh);
+function applyPurchasedTables() {
+  const count = state.tablesCount || (state.tablePurchased ? 1 : 0);
+  state.tablesCount = count;
+  for (let i = 0; i < count; i++) {
+    const slot = TABLE_SLOTS[i];
+    slot.purchased = true;
+    if (!slot.mesh) {
+      slot.mesh = gameScene.createDiningTableMesh(slot.x, slot.z);
+      gameScene.scene.add(slot.mesh);
+    }
+  }
+  if (state.tablesCount >= 4) {
+    buyTableZone.group.visible = false;
+    if (buyTableZone.sprite) buyTableZone.sprite.visible = false;
+  } else {
+    const nextSlot = TABLE_SLOTS[state.tablesCount];
+    buyTableZone.group.position.set(nextSlot.x, 0, nextSlot.z);
+    updateZoneText(buyTableZone, "BUY TABLE", `$${TABLE_COSTS[state.tablesCount]} · Table #${state.tablesCount + 1}`);
+    buyTableZone.group.visible = true;
   }
 }
 
-if (state.tablePurchased) {
-  applyPurchasedTable();
-}
+applyPurchasedTables();
 
 function purchaseTable() {
+  if (state.tablesCount >= 4) return;
+  const currentCost = TABLE_COSTS[state.tablesCount];
+  const slotIdx = state.tablesCount;
+  state.tablesCount++;
   state.tablePurchased = true;
   gameState.save();
   window.audio.upgradeFanfare();
-  showFloatingText(buyTableZone.group.position, "PATIO TABLE UNLOCKED!", "#0284c7");
-  applyPurchasedTable();
+  const boughtSlot = TABLE_SLOTS[slotIdx];
+  showFloatingText(new THREE.Vector3(boughtSlot.x, 0, boughtSlot.z), `GARDEN TABLE #${state.tablesCount} UNLOCKED!`, "#0284c7");
+  applyPurchasedTables();
 }
 
 // 2. Characters & Visual Inventory
@@ -575,7 +611,7 @@ function animate(now) {
   });
 
   // Spacious world perimeter: allow full exploration around patio, out to grass lawn and park bench!
-  player.root.position.x = Math.max(-10.5, Math.min(12.5, player.root.position.x));
+  player.root.position.x = Math.max(-10.5, Math.min(17.5, player.root.position.x));
   player.root.position.z = Math.max(-7.0, Math.min(7.5, player.root.position.z));
 
   // Dynamic zone popup update on step
@@ -657,8 +693,13 @@ function animate(now) {
     frontCust.remainingPies--;
 
     if (frontCust.remainingPies <= 0) {
-      const willDineIn = state.tablePurchased && !window.tableOccupied && !window.tableDirty;
+      const availableSlot = window.getAvailableTableSlot ? window.getAvailableTableSlot() : null;
+      const willDineIn = availableSlot !== null;
       frontCust.dineIn = willDineIn;
+      if (willDineIn) {
+        availableSlot.occupied = true;
+        frontCust.tableSlot = availableSlot;
+      }
 
       const isCard = Math.random() > 0.3;
       const discount = state.activeCampaign ? (state.activeCampaign.priceDiscount || 0) : 0;
@@ -683,7 +724,6 @@ function animate(now) {
       state.dailyPizzasSold += frontCust.orderPies;
 
       if (willDineIn) {
-        window.tableOccupied = true;
         frontCust.state = 'walk_to_table';
         frontCust.bubble.className = 'world-bubble bubble-done';
         frontCust.bubble.innerHTML = '🥤';
@@ -752,24 +792,28 @@ function animate(now) {
     }
   }
 
-  // UPGRADE: BUY DINING TABLE ($35)
-  const distToBuyTable = pPos.distanceTo(buyTableZone.group.position);
-  if (!state.tablePurchased && distToBuyTable < 1.4) {
-    if (state.cash >= 35) {
-      state.actionProgress += dt / 1.2;
-      updateActionRing(state.actionProgress, pPos);
-      if (state.actionProgress >= 1) {
-        state.actionProgress = 0;
-        state.cash -= 35;
-        purchaseTable();
-      }
-    } else {
-      updateActionRing(0, pPos);
-      if (tableWarnCooldown <= 0) {
-        const needed = (35 - state.cash).toFixed(2);
-        showFloatingText(buyTableZone.group.position, `Need $${needed} more!`, "#ef4444");
-        window.audio.warningBuzz();
-        tableWarnCooldown = 2.5;
+  // UPGRADE: BUY DINING TABLE (Up to 4 tables)
+  if (state.tablesCount < 4) {
+    const distToBuyTable = pPos.distanceTo(buyTableZone.group.position);
+    const currentCost = TABLE_COSTS[state.tablesCount];
+    if (distToBuyTable < 1.4) {
+      if (state.cash >= currentCost) {
+        state.actionProgress += dt / 1.2;
+        updateActionRing(state.actionProgress, pPos);
+        if (state.actionProgress >= 1) {
+          state.actionProgress = 0;
+          updateActionRing(0, pPos);
+          state.cash -= currentCost;
+          purchaseTable();
+        }
+      } else {
+        updateActionRing(0, pPos);
+        if (tableWarnCooldown <= 0) {
+          const needed = (currentCost - state.cash).toFixed(2);
+          showFloatingText(buyTableZone.group.position, `Need $${needed} more!`, "#ef4444");
+          window.audio.warningBuzz();
+          tableWarnCooldown = 2.5;
+        }
       }
     }
   }
@@ -924,8 +968,13 @@ function animate(now) {
           currentFront.remainingPies--;
 
           if (currentFront.remainingPies <= 0) {
-            const willDineIn = state.tablePurchased && !window.tableOccupied && !window.tableDirty;
+            const availableSlot = window.getAvailableTableSlot ? window.getAvailableTableSlot() : null;
+            const willDineIn = availableSlot !== null;
             currentFront.dineIn = willDineIn;
+            if (willDineIn) {
+              availableSlot.occupied = true;
+              currentFront.tableSlot = availableSlot;
+            }
 
             const isCard = Math.random() > 0.3;
             const discount = state.activeCampaign ? (state.activeCampaign.priceDiscount || 0) : 0;
@@ -950,7 +999,6 @@ function animate(now) {
             state.dailyPizzasSold += currentFront.orderPies;
 
             if (willDineIn) {
-              window.tableOccupied = true;
               currentFront.state = 'walk_to_table';
               currentFront.bubble.className = 'world-bubble bubble-done';
               currentFront.bubble.innerHTML = '🥤';

@@ -28,7 +28,6 @@
                  │
                  ▼
     [ Reinvest Capital into Payroll Capacity, Equipment & Venue Upgrades ]
-
 ```
 
 ---
@@ -47,52 +46,36 @@
 ### 2. Core Economic & Operational Systems
 
 #### A. The Labor Engine: Weekly Rota (Shift Scheduling)
-
-* **The Manager's Clipboard:** An interactive prop inside the stall opens a 7-day (Monday–Sunday) scheduling grid for hired staff (Chef and Server).
-* **Committed Fixed Payroll:** When a worker is scheduled for a day, their shift wage is committed regardless of whether customers show up. If a player schedules staff on a slow, rainy day, workers stand idle (with bored animations) while their wage accrues.
+* **The Manager's Clipboard:** Interactive prop on stall opens a 7-day (Monday–Sunday) scheduling grid for hired staff (Chef and Server).
+* **Committed Fixed Payroll:** When a worker is scheduled for a day, their shift wage is committed regardless of whether customers show up. Unscheduled staff do not accrue wages; scheduled staff trigger idle animations when quiet.
 * **Labor Cost Benchmark:** The end-of-day P&L tracks the real-world operational ratio:
-
 $$\text{Labor Cost Ratio} = \left( \frac{\text{Total Daily Wages Paid}}{\text{Gross Revenue}} \right) \times 100$$
-
-
-* *Healthy Benchmark (25%–35%):* Optimal staff utilization and balanced profit margins.
-* *Overstaffed (>55%):* High fixed-cost drag eroding net profit during low-volume shifts.
-* *Understaffed (<15% with walkaways):* Kitchen bottleneck causing queue drop-offs and uncaptured revenue.
-
-
+  * *Healthy Benchmark (25%–35%):* Optimal staff utilization and balanced profit margins.
+  * *Overstaffed (>55%):* High fixed-cost drag eroding net profit during low-volume shifts.
+  * *Understaffed (<15% with walkaways):* Kitchen bottleneck causing queue drop-offs and uncaptured revenue.
 
 #### B. Demand Volatility Engine: Weather & Day-of-Week
-
 Daily footfall is governed by combined operational multipliers:
-
 * **Weekly Rhythm:**
-* *Monday / Tuesday (Slow Slump, 0.5x–0.6x):* Low footfall. Best run solo by the founder to avoid payroll drag.
-* *Wednesday / Thursday (Steady, 0.9x–1.1x):* Moderate traffic. Justifies a single helper (Chef).
-* *Friday Night Rush (1.8x):* Peak demand. High volume requires full staffing (Chef + Server) to prevent queue walkaways.
-* *Saturday Market Day (1.6x):* High traffic with larger group orders.
-* *Sunday (Lazy, 0.7x):* Moderate wind-down shift.
-
-
+  * *Monday / Tuesday (Slow Slump, 0.5x–0.6x):* Low footfall. Best run solo by the founder to avoid payroll drag.
+  * *Wednesday / Thursday (Steady, 0.9x–1.1x):* Moderate traffic. Justifies a single helper (Chef).
+  * *Friday Night Rush (1.8x):* Peak demand. High volume requires full staffing (Chef + Server) to prevent queue walkaways.
+  * *Saturday Market Day (1.6x):* High traffic with larger group orders.
+  * *Sunday (Lazy, 0.7x):* Moderate wind-down shift.
 * **Dynamic Weather States:**
-* *Sunny & Warm (1.25x footfall, +20% queue patience):* Ideal outdoor conditions; golden ambient scene lighting.
-* *Overcast (1.0x footfall):* Baseline operations.
-* *Rainy (0.50x footfall, -30% queue patience):* Rain particles, wet cobblestone reflections; pedestrians bypass the stall.
-* *Storm (0.25x footfall, -50% queue patience):* High-risk anomaly; severe financial loss if fully staffed.
-
-
+  * *Sunny & Warm (1.25x footfall, +20% queue patience):* Ideal outdoor conditions; golden ambient scene lighting.
+  * *Overcast (1.0x footfall):* Baseline operations.
+  * *Rainy (0.50x footfall, -30% queue patience):* Rain particles, wet cobblestone reflections; pedestrians bypass the stall.
+  * *Storm (0.25x footfall, -50% queue patience):* High-risk anomaly; severe financial loss if fully staffed.
 
 #### C. Macroeconomics: The 28-Day Payday Cycle
-
 A full in-game month runs across four 7-day cycles, simulating consumer discretionary spending:
-
 * **Week 4 (Month-End Payday Surge):** Footfall increases by +40%. 30% of customers order **2 boxes** at once (testing carry limits and oven batching). Contactless card tipping (10%–15%) increases, and customers become price-inelastic, allowing menu price increases.
 * **Week 1 (Post-Payday Afterglow):** Steady, strong volume with healthy margins.
 * **Weeks 2 & 3 (The Mid-Month Squeeze):** Discretionary spending contracts. Footfall drops by -15%, customers become price-sensitive, and margins tighten.
 
 #### D. Growth Marketing vs. Operational Bottlenecks
-
 Players can launch paid promotions from a marketing chalkboard, testing their capacity limits:
-
 * **Local Flyers ($15, 45s duration):** Low-risk +25% footfall boost for neighborhood awareness.
 * **Social Media Hype ($40, 30s duration):** High-impact +75% footfall blitz with +10% tip probability.
 * **"2-for-1" Promo Coupon ($10, 45s duration):** High volume (+120% footfall), but unit price drops from $16 to $11, demonstrating margin compression and loss-leader dynamics.
@@ -100,108 +83,97 @@ Players can launch paid promotions from a marketing chalkboard, testing their ca
 
 ---
 
-### 3. Current Prototype State (The Baseline)
+### 3. Comprehensive Development Roadmap & Implementation Status
 
-The existing prototype (`pizza_tycoon_3d.html`) provides the foundational proof of concept:
+```
+PHASE 1 ──────► PHASE 2 ──────► PHASE 3 ──────► PHASE 4 ──────► PHASE 5 ──────► PHASE 6
+Stall Polish    Labor Rota,     Supply Chain    Work-Life       Tactile Immersion  Venue Scaling
+& Persistence   Demand & Ads    & Pricing       & Dilemmas      & Automation       & Fleet Expansion
+ [DONE]          [DONE]          [DONE]          [DONE]          [IN PROGRESS]      [PLANNED]
+```
 
-* **Environment:** Fully visible, open-air cobblestone market terrace with an active stone pizza oven, animated hearth fire, prep counter with rolling pin, ticket rack, boxed pickup table, front counter, and street curb.
-* **Manual Operations Pipeline:** Take orders at the counter $\rightarrow$ knead and fire dough at the stone oven with circular radial feedback $\rightarrow$ box pizzas onto the prep table $\rightarrow$ stack finished boxes on the player's head $\rightarrow$ deliver to counter.
-* **Realistic Checkout:** Contactless POS terminal (audio beeps, deductions of 2.5% card interchange fees) and a brass cash till.
-* **Hired Staff Automation:** Distinct upgrade pads for **Chef ($45)** (automates cooking) and **Server ($60)** (automates order taking and delivery) with debounced shortfall prompts.
-* **Live P&L Statement:** Real-time breakdown of Gross Revenue, COGS ($3.50/pizza), Card Interchange Fees (2.5%), Staff Payroll, and Net Operating Profit.
+#### Phase 1: Stall Polish, Feedback & Persistence — [COMPLETED]
+* [x] **Data Persistence:** `localStorage` schema saving bank balance, hired staff, lifetime stats, inventory, active rota, and dining tables across browser reloads.
+* [x] **Visual Polish & Character Animation:** Dynamic leg-swing locomotion, dough-tossing animations at the prep table, and procedural smoke/steam particles rising from stone oven chimney.
+* [x] **Customer Archetypes & Visual Expressiveness:**
+  * [x] *Impatient Commuter:* Short patience timer, clock icon indicator, card-only, high tip for fast service.
+  * [x] *Family / Group:* Orders 2–3 pizzas, accompanied by visible animated child mesh, waits longer.
+  * [x] *Frugal Local:* Cash-only, highly sensitive to price increases.
+  * [x] *Visual Moods:* Emoji bubbles transition from smiling (`😋` / `🍕`) to angry/frustrated when waiting over 50% of patience.
+* [x] **Tactile Haptics:** Integrated Web Vibration API (`navigator.vibrate`) for subtle physical clicks during contactless card taps, box pickups, and upgrade completions.
+
+#### Phase 2: Labor Scheduling, Volatility & Marketing — [COMPLETED]
+* [x] **Manager's Rota Clipboard:**
+  * [x] Interactive 3D clipboard prop beside till opens 7-day (Mon–Sun) staffing grid.
+  * [x] Toggle Chef and Server schedules to balance labor expense against forecasted volume.
+  * [x] Unscheduled staff despawn/stand idle; scheduled staff collect wages and trigger idle animations on quiet shifts.
+* [x] **Dynamic Demand Engine:**
+  * [x] 7-day footfall cycle (Monday slump to Friday dinner rush).
+  * [x] 3-day weather and payday forecast widget on clipboard and shift debriefs.
+  * [x] Dynamic weather visuals (rain particles, cloudy skybox shifts, wet surface shaders).
+* [x] **Payday Cycle Mechanics:**
+  * [x] 28-day monthly calendar with Week 4 payday spikes, multi-box orders, and increased card tipping.
+* [x] **Marketing Campaigns:**
+  * [x] Interactive marketing chalkboard for Local Flyers, Social Blitzes, and 2-for-1 Coupons.
+  * [x] Track walkaways and calculate Campaign ROAS directly on the daily debrief screen.
+
+#### Phase 3: Supply Chain, Recipes & Pricing Elasticity — [COMPLETED]
+* [x] **Raw Ingredient Inventory:**
+  * [x] Split COGS into tangible stock items: Flour/Dough Balls, Tomato Sauce, and Mozzarella Blocks.
+  * [x] Restock delivery pallet pad: choose between Daily Small Orders ($15) vs. Wholesale Pallets ($45).
+* [x] **Spoilage & Cold Storage:**
+  * [x] Perishable cheese spoils overnight unless the player invests in the Refrigerated Prep Counter upgrade ($80).
+* [x] **Menu Pricing Slider:**
+  * [x] Real-time price slider ($10 to $26).
+  * [x] Elasticity engine: underpricing creates massive queues; overpricing reduces foot traffic while boosting unit gross margins.
+
+#### Phase 4: Work-Life Balance & Founder Dilemmas — [COMPLETED]
+* [x] **Stamina & Burnout Meter:**
+  * [x] Continuous manual shifts drain founder stamina bar, slowing walk speed.
+  * [x] Relaxing on the lawn park bench restores stamina. Delegating shifts to hired staff prevents burnout.
+* [x] **Personal Life & Morale Tracker:**
+  * [x] Off-shift family morale meter (0-100%).
+  * [x] Shift-end narrative dilemmas (e.g. school play vs. Friday dinner rush, supplier payment trade-offs).
+* [x] **Working Capital Loans:**
+  * [x] Bank micro-loan pad ($250 at 8% daily interest) with repayment controls, teaching debt service coverage.
 
 ---
 
-### 4. Comprehensive Development Roadmap
+### 4. Active Feature Backlog & Immediate To-Do List
 
-```
-PHASE 1 ──────► PHASE 2 ──────► PHASE 3 ──────► PHASE 4 ──────► PHASE 5
-Stall Polish    Labor Rota,     Supply Chain    Work-Life       Venue Upgrades
-& Persistence   Demand & Ads    & Pricing       & Dilemmas      & Distribution
+#### Tactical Immersion & Quality of Life (Current Priority)
+* [ ] **Hide Staff Hiring Circles Once Hired:** Remove or hide the hiring footprint circles for Chef and Server once they are hired so the kitchen patio floor stays clean and uncluttered.
+* [ ] **Table Collisions:** Add solid bounding box obstacle entries for all purchased garden dining tables so the player and NPCs cannot walk directly through the table meshes.
+* [ ] **Animated Rain Drops:** Make rain line particles move downward dynamically with gravity and loop during rainy/storm weather, rather than remaining static.
+* [ ] **Rubbish Bin Prop & Disposal Mechanic:**
+  * Place a physical outdoor rubbish bin / trash can near the garden lawn.
+  * When cleaning tables or street litter, player collects rubbish bags/wrappers and drops them into the bin.
+* [ ] **Visual Table Dining (Pizza Slices Disappearing):**
+  * When customers sit at tables, display an open pizza box or wooden serving board on the table.
+  * Animate pizza slices disappearing one by one as they eat, finishing with the empty box/cup becoming rubbish.
+* [ ] **Hireable Cleaner NPC:**
+  * Add upgrade pad to hire a dedicated Cleaner staff member ($50 hire, $20/day wage).
+  * Cleaner automatically sweeps litter, walks to dirty tables, wipes them down, and empties rubbish into the bin.
+* [ ] **Assistant Manager Hire (Automated Restocking):**
+  * Unlockable senior hire ($90 hire, $35/day wage).
+  * Automatically monitors flour, sauce, and cheese levels and orders restock pallets when supplies drop low.
 
-```
+#### Phase 5 & 6: Venue Scaling, Fleet & Production Deployment
 
-#### Phase 1: Stall Polish, Feedback & Persistence
-
-* **Data Persistence:** Implement `localStorage` schema saving bank balance, hired staff, lifetime stats, and inventory across browser reloads.
-* **Visual Polish & Character Animation:** Add leg-swing locomotion, dough-tossing animations at the prep table, and procedural smoke/steam particles rising from the stone oven chimney.
-* **Customer Archetypes:**
-* *Impatient Commuter:* Short patience timer, card-only, high tip for fast service.
-* *Family / Group:* Orders 2–3 pizzas, waits longer, tests carry stack capacity.
-* *Frugal Local:* Cash-only, highly sensitive to price increases.
-
-
-* **Tactile Haptics:** Integrate the Web Vibration API (`navigator.vibrate`) for subtle physical clicks during contactless card taps, box pickups, and upgrade completions.
-
-#### Phase 2: Labor Scheduling, Volatility & Marketing
-
-* **Manager's Rota Clipboard:**
-* Add a physical clipboard prop beside the till to open the 7-day (Mon–Sun) staffing grid.
-* Toggle Chef and Server schedules to balance labor expense against forecasted volume.
-* Unscheduled staff despawn for the day; scheduled staff collect wages and trigger idle animations on quiet days.
-
-
-* **Dynamic Demand Engine:**
-* Implement the 7-day footfall cycle (Monday slump to Friday dinner rush).
-* Add a 3-day weather and payday forecast widget to the clipboard to inform scheduling decisions.
-* Implement weather visuals (falling rain line particles, cloudy skybox shifts, wet surface shaders).
-
-
-* **Payday Cycle Mechanics:**
-* 28-day monthly calendar with Week 4 payday spikes, multi-box orders, and increased card tipping.
-
-
-* **Marketing Campaigns:**
-* Deploy the marketing board for Local Flyers, Social Blitzes, and 2-for-1 Coupons.
-* Track walkaways and calculate Campaign ROAS directly on the daily debrief screen.
-
-
-
-#### Phase 3: Supply Chain, Recipes & Pricing Elasticity
-
-* **Raw Ingredient Inventory:**
-* Split COGS into tangible stock items: Flour/Dough Balls, Tomato Sauce, and Mozzarella Blocks.
-* Restock via a delivery pallet pad: choose between *Daily Small Orders* (high unit cost) vs. *Wholesale Pallets* (low unit cost, high working-capital requirement).
-
-
-* **Spoilage & Cold Storage:**
-* Perishable cheese spoils overnight unless the player invests in a refrigerated counter upgrade.
-
-
-* **Menu Pricing Slider:**
-* Allow setting pizza prices between $10 and $26.
-* Dynamically calculate demand elasticity: underpricing creates unmanageable queues; overpricing reduces foot traffic while boosting unit gross margins.
-
-
-
-#### Phase 4: Work-Life Balance & Founder Dilemmas
-
-* **Stamina & Burnout Meter:**
-* Operating continuous manual shifts drains the founder's stamina bar, slowing walk speed and increasing preparation errors.
-* Delegating shifts to hired staff allows the founder to rest and recover stamina.
-
-
-* **Personal Life & Morale Tracker:**
-* Introduce an off-shift family morale meter.
-* Trigger narrative dilemma events at the end of shifts:
-* *Example:* "Your daughter's school play coincides with Friday's payday rush. Do you close early (-$140 revenue, +25 family morale) or stay open to cover supplier debt (+revenue, -family morale)?"
-
-
-
-
-* **Working Capital Loans:** Introduce bank micro-loans ($250 at 8% daily interest) to fund early equipment or marketing, teaching debt service coverage and interest risk.
-
-#### Phase 5: Venue Progression & Production Deployment
-
-* **Venue Scaling:**
-* *Tier 1: Street Stall (Baseline):* Hand-operated market stand with a single stone oven.
-* *Tier 2: Mobile Food Truck:* Unlocks mobility to festival/beach zones, vehicle drive-up order lanes, generator gas costs, and street permit overhead.
-* *Tier 3: Brick-and-Mortar Pizzeria:* Dine-in seating, plate-washing mechanics, delivery moped drivers, dual stone ovens, and a dedicated back office.
-
-
-* **PWA & Production Optimization:**
-* Web App Manifest and Service Worker configuration for full-screen, offline-capable mobile home-screen installation.
-* Mesh instancing (`InstancedMesh`) for crowded customer queues and pizza box stacks to maintain a locked 60 FPS on low-power mobile devices.
-
-
-* **Educational Export:** Add an end-of-game performance review scoring Return on Investment (ROI), Labor Efficiency Ratio, Working Capital Management, and Work-Life Equilibrium.
+* [ ] **Tier 1.5: Outdoor Garden Expansion (Partially Implemented):**
+  * [x] Up to 4 buyable dining tables placed on the grass lawn ($35, $45, $60, $75).
+  * [x] Dine-in drink revenue +$3.50 per seated guest.
+  * [x] Table mess and litter cleanup loop.
+* [ ] **Tier 2: Drive-Through Expansion:**
+  * Vehicle curb pickup lane with car models (sedan, minivan, pickup).
+  * Car window orders with timed drive-through queues, higher ticket averages, and car horn audio cues.
+* [ ] **Tier 3: Pizza Van Expansion (Mobile Fleet):**
+  * Buy a mobile food truck/van that can be parked beside the stall or dispatched.
+  * Staff the van with extra cooks and send it off-site to Weekend Festivals, Football Matches, and Beach Events for large lump-sum payouts.
+* [ ] **Tier 4: Brick-and-Mortar Pizzeria:**
+  * Full indoor restaurant layout: multiple stone ovens, dedicated washing stations, and moped delivery drivers.
+* [ ] **PWA & Production Optimization:**
+  * Web App Manifest & Service Worker for offline play and home screen install.
+  * Low-poly instancing for locked 60 FPS mobile performance.
+* [ ] **Educational Export & Entrepreneur Scorecard:**
+  * Comprehensive lifetime review scoring ROI, Labor Efficiency Ratio, Working Capital Management, and Work-Life Equilibrium.

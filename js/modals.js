@@ -370,6 +370,33 @@
         serverRow.appendChild(btn);
       });
     }
+
+    // Drive-Thru Server Rota row
+    const dtServerRow = document.getElementById('dt-server-days-row');
+    if (dtServerRow) {
+      dtServerRow.innerHTML = '';
+      const dtServerStatus = document.getElementById('dt-server-hired-status');
+      if (dtServerStatus) dtServerStatus.innerText = state.driveThruServerHired ? "Status: Employed" : "Not Hired Yet ($60)";
+
+      (window.DAY_NAMES || ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']).forEach((day, idx) => {
+        const isToday = (idx === state.dayIndex);
+        const active = state.driveThruServerRota ? state.driveThruServerRota[idx] : true;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `py-1.5 rounded-lg border text-xs font-bold transition ${active ? 'bg-amber-600/80 border-amber-400 text-white' : 'bg-slate-900 border-slate-800 text-slate-500'} ${isToday ? 'ring-2 ring-amber-400' : ''}`;
+        btn.innerText = day;
+        btn.disabled = !state.driveThruServerHired;
+        btn.title = active ? "Scheduled to work" : "Day off";
+        btn.onclick = () => {
+          if (window.audio) window.audio.init();
+          if (!state.driveThruServerRota) state.driveThruServerRota = [true, true, true, true, true, true, true];
+          state.driveThruServerRota[idx] = !state.driveThruServerRota[idx];
+          renderRotaModal();
+          if (window.applyHiredDriveThruServer) window.applyHiredDriveThruServer();
+        };
+        dtServerRow.appendChild(btn);
+      });
+    }
   }
 
   if (btnRota) btnRota.addEventListener('click', openRotaModal);
@@ -547,7 +574,8 @@
 
     const isChef = window.isChefWorkingToday ? window.isChefWorkingToday() : false;
     const isServer = window.isServerWorkingToday ? window.isServerWorkingToday() : false;
-    if (staffEl) staffEl.innerText = (isChef ? 1 : 0) + (isServer ? 1 : 0);
+    const isDtServer = window.isDriveThruServerWorkingToday ? window.isDriveThruServerWorkingToday() : false;
+    if (staffEl) staffEl.innerText = (isChef ? 1 : 0) + (isServer ? 1 : 0) + (isDtServer ? 1 : 0);
     if (wagesEl) wagesEl.innerText = `-$${state.totalWages.toFixed(2)}`;
 
     if (wasteEl) {

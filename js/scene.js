@@ -989,9 +989,42 @@ class GameScene {
     const redMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.4 });
     const whiteMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.3 });
 
-    // 1. Illuminated Drive-Thru Menu & Intercom Pillar (Western curb side: x=-7.5, z=7.8)
+    // 1. Dark Asphalt Side Drive-Thru Lane (runs from South z=14 to North z=-18 along x=-12.2)
+    const sideLane = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 34), new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9 }));
+    sideLane.rotation.x = -Math.PI / 2;
+    sideLane.position.set(-12.2, 0.02, -1.0);
+    sideLane.receiveShadow = true;
+    group.add(sideLane);
+
+    // Yellow outer guideline
+    const edgeLine = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 34), yellowGlow);
+    edgeLine.rotation.x = -Math.PI / 2;
+    edgeLine.position.set(-14.3, 0.03, -1.0);
+    edgeLine.receiveShadow = true;
+    group.add(edgeLine);
+
+    // White stop bar at service window (z=1.5)
+    const stopLine = new THREE.Mesh(new THREE.PlaneGeometry(3.8, 0.55), whiteMat);
+    stopLine.rotation.x = -Math.PI / 2;
+    stopLine.position.set(-12.2, 0.03, 1.5);
+    stopLine.receiveShadow = true;
+    group.add(stopLine);
+
+    // Painted directional arrows pointing North
+    [-5.0, 7.5].forEach(az => {
+      const shaft = new THREE.Mesh(new THREE.PlaneGeometry(0.35, 1.8), whiteMat);
+      shaft.rotation.x = -Math.PI / 2;
+      shaft.position.set(-12.2, 0.03, az);
+      group.add(shaft);
+      const head = new THREE.Mesh(new THREE.ConeGeometry(0.55, 0.9, 3), whiteMat);
+      head.rotation.x = -Math.PI / 2;
+      head.position.set(-12.2, 0.03, az - 1.2);
+      group.add(head);
+    });
+
+    // 2. Illuminated Drive-Thru Menu & Intercom Pillar (Lane entry at south: x=-13.8, z=9.0 facing South)
     const pillar = new THREE.Group();
-    pillar.position.set(-7.5, 0, 8.2);
+    pillar.position.set(-13.8, 0, 9.0);
 
     const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 2.4, 12), metalMat);
     post.position.y = 1.2;
@@ -1000,16 +1033,14 @@ class GameScene {
 
     const menuBox = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 0.22), signMat);
     menuBox.position.set(0, 1.9, 0);
-    menuBox.rotation.y = -0.15; // angled toward incoming drivers
     menuBox.castShadow = true;
     pillar.add(menuBox);
 
     const menuScreen = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.95), yellowGlow);
     menuScreen.position.set(0, 1.9, 0.12);
-    menuScreen.rotation.y = -0.15;
     pillar.add(menuScreen);
 
-    // Mini speaker grille box
+    // Speaker box
     const speaker = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.18), metalMat);
     speaker.position.set(0.65, 1.0, 0.05);
     speaker.castShadow = true;
@@ -1017,55 +1048,40 @@ class GameScene {
 
     group.add(pillar);
 
-    // 2. Curb Service Window Counter & Striped Canopy (x=-4.5, z=7.8)
+    // 3. Side Service Window Counter & Striped Canopy on western patio border (x=-9.25, z=1.5)
     const serviceBay = new THREE.Group();
-    serviceBay.position.set(-4.5, 0, 7.8);
+    serviceBay.position.set(-9.25, 0, 1.5);
 
-    // Stainless steel counter shelf
-    const shelf = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.14, 0.9), metalMat);
-    shelf.position.y = 0.65;
+    // Stainless steel counter shelf facing west
+    const shelf = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.14, 2.5), metalMat);
+    shelf.position.set(0, 0.72, 0);
     shelf.castShadow = true;
     shelf.receiveShadow = true;
     serviceBay.add(shelf);
 
-    // Two awning support poles
-    [-1.0, 1.0].forEach(px => {
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.1, 8), metalMat);
-      pole.position.set(px, 1.15, 0.35);
+    // Awning support posts
+    [-1.0, 1.0].forEach(pz => {
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.2, 8), metalMat);
+      pole.position.set(-0.35, 1.15, pz);
       pole.castShadow = true;
       serviceBay.add(pole);
     });
 
-    // Striped Awning overhead
+    // Striped Awning overhead sloping towards the west drive lane
     const awning = new THREE.Group();
-    awning.position.set(0, 2.2, 0.2);
-    awning.rotation.x = 0.25; // slope down towards street
+    awning.position.set(-0.15, 2.2, 0);
+    awning.rotation.z = 0.25; // slope down towards drive-thru car
     const stripeCount = 6;
     for (let s = 0; s < stripeCount; s++) {
-      const stripeW = 2.4 / stripeCount;
+      const stripeW = 2.5 / stripeCount;
       const stripeMat = s % 2 === 0 ? redMat : whiteMat;
-      const piece = new THREE.Mesh(new THREE.BoxGeometry(stripeW, 0.06, 1.1), stripeMat);
-      piece.position.x = -1.2 + (s + 0.5) * stripeW;
+      const piece = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.06, stripeW), stripeMat);
+      piece.position.z = -1.25 + (s + 0.5) * stripeW;
       piece.castShadow = true;
       awning.add(piece);
     }
     serviceBay.add(awning);
     group.add(serviceBay);
-
-    // 3. Road asphalt markings for Drive-Thru Lane (z=10.5)
-    // White stop line on asphalt
-    const stopLine = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 3.4), whiteMat);
-    stopLine.rotation.x = -Math.PI / 2;
-    stopLine.position.set(-3.5, 0.03, 10.5);
-    stopLine.receiveShadow = true;
-    group.add(stopLine);
-
-    // Yellow drive lane guideline
-    const guideLine = new THREE.Mesh(new THREE.PlaneGeometry(16, 0.25), yellowGlow);
-    guideLine.rotation.x = -Math.PI / 2;
-    guideLine.position.set(-4.0, 0.03, 12.2);
-    guideLine.receiveShadow = true;
-    group.add(guideLine);
 
     group.position.set(0, 0, 0);
     this.scene.add(group);

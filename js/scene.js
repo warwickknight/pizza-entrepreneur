@@ -18,10 +18,12 @@ class GameScene {
     this.camera = new THREE.OrthographicCamera(
       -this.frustumD * aspect, this.frustumD * aspect,
       this.frustumD, -this.frustumD,
-      1, 100
+      1, 150
     );
-    this.camera.position.set(20, 26, 20);
-    this.camera.lookAt(0, 0, 0);
+    this.cameraOffset = new THREE.Vector3(20, 26, 20);
+    this.cameraTarget = new THREE.Vector3(0, 0, 0);
+    this.camera.position.copy(this.cameraOffset);
+    this.camera.lookAt(this.cameraTarget);
 
     this.setupLighting();
     this.setupEnvironment();
@@ -781,6 +783,19 @@ class GameScene {
       this.ambientLight.intensity = 0.52;
       this.sun.intensity = 0.35;
     }
+  }
+
+  updateCameraFollow(targetPos, dt = 0.016) {
+    if (!targetPos) return;
+    // Smooth damp towards player
+    const lerpFactor = 1.0 - Math.exp(-6.0 * dt);
+    this.cameraTarget.lerp(new THREE.Vector3(targetPos.x, 0, targetPos.z), lerpFactor);
+    this.camera.position.set(
+      this.cameraTarget.x + this.cameraOffset.x,
+      this.cameraOffset.y,
+      this.cameraTarget.z + this.cameraOffset.z
+    );
+    this.camera.lookAt(this.cameraTarget);
   }
 
   onResize() {

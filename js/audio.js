@@ -100,5 +100,18 @@ class AudioEngine {
     this.vibrate([80, 50, 80]);
     this.beep(220, 'sawtooth', 0.18, 0.12);
   }
+  carHorn() {
+    if (!this.enabled) return;
+    this.init();
+    this.vibrate([30, 20, 30]);
+    this.beep(440, 'triangle', 0.12, 0.15);
+    setTimeout(() => this.beep(440, 'triangle', 0.15, 0.15), 100);
+  }
+  carHornAngry() {
+    if (!this.enabled) return;
+    this.init();
+    this.vibrate(200);
+    this.beep(330, 'sawtooth', 0.35, 0.18);
+  }
 }
 window.audio = new AudioEngine();

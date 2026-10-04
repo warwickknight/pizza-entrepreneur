@@ -164,9 +164,11 @@ Stall Polish    Labor Rota,     Supply Chain    Work-Life       Tactile Immersio
   * [x] Up to 4 buyable dining tables placed on the grass lawn ($35, $45, $60, $75).
   * [x] Dine-in drink revenue +$3.50 per seated guest.
   * [x] Table mess and litter cleanup loop.
-* [ ] **Tier 2: Drive-Through Expansion:**
-  * Vehicle curb pickup lane with car models (sedan, minivan, pickup).
-  * Car window orders with timed drive-through queues, higher ticket averages, and car horn audio cues.
+* [x] **Tier 2: Drive-Through Expansion — [COMPLETED]:**
+  * [x] Vehicle roadway traffic lane along the front street with 3 car archetypes (Sedan, Family SUV/Minivan, Pickup Truck).
+  * [x] Rotating 3D wheels, headlights, brake lights, and friendly/angry car horn audio effects.
+  * [x] Curbside service point with illuminated menu pillar, striped Italian canopy, and white asphalt stop line.
+  * [x] Large batch orders (2 to 4 pizzas), 80% contactless card checkout, and roadside combo drink tips.
 * [ ] **Tier 3: Pizza Van Expansion (Mobile Fleet):**
   * Buy a mobile food truck/van that can be parked beside the stall or dispatched.
   * Staff the van with extra cooks and send it off-site to Weekend Festivals, Football Matches, and Beach Events for large lump-sum payouts.

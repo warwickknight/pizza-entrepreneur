@@ -21,6 +21,7 @@ const defaultState = {
   cleanerWagePerSec: 0.08,
   managerHired: false,
   managerWagePerSec: 0.16,
+  driveThruUnlocked: false,
 
   // 7-day Rota Schedule: Array of booleans for [Mon, Tue, Wed, Thu, Fri, Sat, Sun]
   chefRota: [true, true, true, true, true, true, true],
@@ -125,6 +126,7 @@ class GameState {
           hasRefrigeration: parsed.hasRefrigeration || false,
           tablesCount: parsed.tablesCount !== undefined ? Math.min(4, Math.max(0, parsed.tablesCount)) : (parsed.tablePurchased ? 1 : 0),
           tablePurchased: (parsed.tablesCount !== undefined ? parsed.tablesCount > 0 : !!parsed.tablePurchased),
+          driveThruUnlocked: parsed.driveThruUnlocked || false,
           founderEnergy: parsed.founderEnergy !== undefined ? parsed.founderEnergy : 100,
           familyMorale: parsed.familyMorale !== undefined ? parsed.familyMorale : 80,
           loanPrincipal: parsed.loanPrincipal || 0,
@@ -165,6 +167,7 @@ class GameState {
         serverHired: this.data.serverHired,
         tablePurchased: this.data.tablesCount > 0,
         tablesCount: this.data.tablesCount,
+        driveThruUnlocked: this.data.driveThruUnlocked,
         chefRota: this.data.chefRota,
         serverRota: this.data.serverRota,
         cleanerHired: this.data.cleanerHired,

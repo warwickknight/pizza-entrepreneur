@@ -172,8 +172,36 @@ hireCleanerZone.group.position.set(8.2, 0, 1.2);
 const hireManagerZone = createGroundZoneRing(gameScene.scene, 1.4, 0x6366f1, "HIRE MANAGER", "$90 · Auto Stock 📋", { popupOnStep: true });
 hireManagerZone.group.position.set(-3.8, 0, -5.5);
 
-const allGroundZones = [zoneOrder, zoneCook, zonePickup, hireChefZone, hireServerZone, buyTableZone, supplyZone, restZone, bankZone, hireCleanerZone, hireManagerZone];
-const popupZones = [hireChefZone, hireServerZone, buyTableZone, supplyZone, restZone, bankZone, hireCleanerZone, hireManagerZone];
+// Tier 2: Drive-Through Expansion Zone & Curbside Counter
+const unlockDriveThruZone = createGroundZoneRing(gameScene.scene, 1.4, 0xeab308, "DRIVE-THRU", "$120 · Road Lane 🚗", { popupOnStep: true });
+unlockDriveThruZone.group.position.set(-4.5, 0, 5.8);
+
+let physicalDriveThruProps = null;
+function applyDriveThrough() {
+  if (state.driveThruUnlocked) {
+    unlockDriveThruZone.group.visible = false;
+    if (unlockDriveThruZone.sprite) unlockDriveThruZone.sprite.visible = false;
+    if (!physicalDriveThruProps) {
+      physicalDriveThruProps = gameScene.createDriveThruProps();
+    } else {
+      physicalDriveThruProps.visible = true;
+    }
+  } else {
+    if (physicalDriveThruProps) physicalDriveThruProps.visible = false;
+  }
+}
+if (state.driveThruUnlocked) applyDriveThrough();
+
+function unlockDriveThrough() {
+  state.driveThruUnlocked = true;
+  gameState.save();
+  window.audio.upgradeFanfare();
+  showFloatingText(new THREE.Vector3(-4.5, 1.2, 7.8), "🚗 DRIVE-THRU OPEN!", "#eab308");
+  applyDriveThrough();
+}
+
+const allGroundZones = [zoneOrder, zoneCook, zonePickup, hireChefZone, hireServerZone, buyTableZone, supplyZone, restZone, bankZone, hireCleanerZone, hireManagerZone, unlockDriveThruZone];
+const popupZones = [hireChefZone, hireServerZone, buyTableZone, supplyZone, restZone, bankZone, hireCleanerZone, hireManagerZone, unlockDriveThruZone];
 function updateZonePopupVisibility(playerPos) {
   popupZones.forEach(z => {
     if (z && z.sprite && z.popupOnStep) {
@@ -224,6 +252,96 @@ window.removeTablePizza = function(platter) {
   if (!platter) return;
   gameScene.scene.remove(platter);
 };
+
+// --- Drive-Through Car Class & Traffic System ---
+class DriveThruCar {
+  constructor() {
+    const types = ['sedan', 'suv', 'pickup'];
+    const colors = [0x2563eb, 0xdc2626, 0x16a34a, 0xf59e0b, 0x9333ea, 0x0284c7, 0xe11d48];
+    this.type = types[Math.floor(Math.random() * types.length)];
+    this.color = colors[Math.floor(Math.random() * colors.length)];
+
+    this.carGroup = gameScene.createCarMesh(this.type, this.color);
+    this.carGroup.position.set(-25, 0, 10.5);
+    this.carGroup.rotation.y = Math.PI / 2; // Facing East along roadway
+    gameScene.scene.add(this.carGroup);
+
+    this.totalPies = this.type === 'suv' ? (Math.random() < 0.5 ? 3 : 4) : (this.type === 'pickup' ? 3 : 2);
+    this.remainingPies = this.totalPies;
+    this.state = 'approaching';
+    this.speed = 9.5;
+    this.targetX = -4.5;
+    this.patience = 26.0;
+    this.maxPatience = 26.0;
+    this.honked = false;
+
+    this.bubble = document.createElement('div');
+    this.bubble.className = 'world-bubble';
+    this.bubble.innerHTML = `🚗 ${'🍕'.repeat(this.totalPies)}`;
+    bubbleContainer.appendChild(this.bubble);
+  }
+
+  update(dt, camera) {
+    if (this.state === 'approaching') {
+      this.carGroup.position.x += this.speed * dt;
+      if (this.carGroup.wheels) {
+        this.carGroup.wheels.forEach(w => w.rotation.x += this.speed * dt * 3.5);
+      }
+      if (this.carGroup.position.x >= this.targetX) {
+        this.carGroup.position.x = this.targetX;
+        this.state = 'waiting';
+        if (!this.honked) {
+          this.honked = true;
+          window.audio.carHorn();
+        }
+      }
+    } else if (this.state === 'waiting') {
+      this.patience -= dt;
+      const pct = this.patience / this.maxPatience;
+      if (pct < 0.35) {
+        this.bubble.className = 'world-bubble bubble-angry';
+        this.bubble.innerHTML = `🚗💨 🍕 (${Math.ceil(this.patience)}s)`;
+      } else {
+        this.bubble.className = 'world-bubble';
+        this.bubble.innerHTML = `🚗 ${'🍕'.repeat(this.remainingPies)}`;
+      }
+
+      if (this.patience <= 0) {
+        this.state = 'leaving';
+        state.dailyWalkaways++;
+        window.audio.carHornAngry();
+        this.bubble.className = 'world-bubble bubble-angry';
+        this.bubble.innerHTML = '😡💨';
+      }
+    } else if (this.state === 'leaving') {
+      this.carGroup.position.x += (this.speed + 2.5) * dt;
+      if (this.carGroup.wheels) {
+        this.carGroup.wheels.forEach(w => w.rotation.x += (this.speed + 2.5) * dt * 3.5);
+      }
+      if (this.carGroup.position.x > 25) {
+        this.destroy();
+        return false;
+      }
+    }
+
+    const tempV = new THREE.Vector3().copy(this.carGroup.position);
+    tempV.y += 2.0;
+    tempV.project(camera);
+    this.bubble.style.left = `${(tempV.x * 0.5 + 0.5) * window.innerWidth}px`;
+    this.bubble.style.top = `${(-(tempV.y * 0.5) + 0.5) * window.innerHeight}px`;
+    return true;
+  }
+
+  destroy() {
+    if (this.bubble && this.bubble.parentNode) {
+      this.bubble.parentNode.removeChild(this.bubble);
+    }
+    gameScene.scene.remove(this.carGroup);
+  }
+}
+
+let activeDriveThruCar = null;
+let carSpawnCooldown = 4.0;
 
 function getAvailableTableSlot() {
   const count = state.tablesCount || (state.tablePurchased ? 1 : 0);
@@ -910,6 +1028,72 @@ function animate(now) {
     }
   }
 
+  // Step 4B: Drive-Through Service Point Delivery (x = -4.5, z = 7.0)
+  const distToDriveThru = Math.hypot(pPos.x - (-4.5), pPos.z - 7.0);
+  if (state.driveThruUnlocked && distToDriveThru < 1.4 && state.playerCarrying > 0 && activeDriveThruCar && activeDriveThruCar.state === 'waiting') {
+    state.playerCarrying--;
+    updatePlayerStackVisual();
+    activeDriveThruCar.remainingPies--;
+
+    if (activeDriveThruCar.remainingPies <= 0) {
+      const totalPies = activeDriveThruCar.totalPies;
+      const unitPrice = state.menuPrice + 2.50; // Drive-thru fast lane premium
+      const comboDrink = 3.50;
+      const rawSale = (unitPrice * totalPies) + comboDrink;
+      const isCard = Math.random() > 0.2; // 80% card tap
+      const fee = isCard ? (rawSale * state.cardFeeRate) : 0;
+      const netCash = rawSale - fee;
+      const totalCOGS = (state.costPerPizza * totalPies) + 0.60;
+
+      state.cash += netCash;
+      state.totalRevenue += rawSale;
+      state.dailyRevenue += rawSale;
+      state.totalCOGS += totalCOGS;
+      state.dailyCOGS += totalCOGS;
+      state.totalFees += fee;
+      state.pizzasSold += totalPies;
+      state.dailyPizzasSold += totalPies;
+
+      activeDriveThruCar.state = 'leaving';
+      activeDriveThruCar.bubble.className = 'world-bubble bubble-done';
+      activeDriveThruCar.bubble.innerHTML = '😋🚗💨';
+      window.audio.carHorn();
+      if (isCard) {
+        window.audio.posCardTap();
+        showFloatingText(new THREE.Vector3(-4.5, 1.4, 8.5), `+$${netCash.toFixed(2)} (Drive-Thru Card!)`, "#10b981");
+      } else {
+        window.audio.cashRegister();
+        showFloatingText(new THREE.Vector3(-4.5, 1.4, 8.5), `+$${rawSale.toFixed(2)} (Drive-Thru Cash!)`, "#facc15");
+      }
+    } else {
+      window.audio.boxPickup();
+      showFloatingText(new THREE.Vector3(-4.5, 1.4, 8.5), `1 Loaded (${activeDriveThruCar.remainingPies} left)`, "#38bdf8");
+    }
+  }
+
+  // UPGRADE: UNLOCK DRIVE-THRU ($120)
+  const distToUnlockDriveThru = (!state.driveThruUnlocked && unlockDriveThruZone) ? pPos.distanceTo(unlockDriveThruZone.group.position) : 999;
+  if (!state.driveThruUnlocked && distToUnlockDriveThru < 1.4) {
+    if (state.cash >= 120) {
+      state.actionProgress += dt / 1.5;
+      updateActionRing(state.actionProgress, pPos);
+      if (state.actionProgress >= 1) {
+        state.actionProgress = 0;
+        updateActionRing(0, pPos);
+        state.cash -= 120;
+        unlockDriveThrough();
+      }
+    } else {
+      updateActionRing(0, pPos);
+      if (chefWarnCooldown <= 0) {
+        const needed = (120 - state.cash).toFixed(2);
+        showFloatingText(unlockDriveThruZone.group.position, `Need $${needed} more!`, "#ef4444");
+        window.audio.warningBuzz();
+        chefWarnCooldown = 2.5;
+      }
+    }
+  }
+
   // UPGRADE: HIRE CHEF ($45)
   const distToHireChef = (!state.chefHired && hireChefZone) ? pPos.distanceTo(hireChefZone.group.position) : 999;
   if (!state.chefHired && distToHireChef < 1.4) {
@@ -1079,7 +1263,7 @@ function animate(now) {
   }
 
   // Reset ring if moved off any station
-  if (distToOrderZone >= 1.3 && distToCookZone >= 1.4 && distToHireChef >= 1.4 && distToHireServer >= 1.4 && distToBuyTable >= 1.4 && distToSupply >= 1.4 && distToRest >= 1.4 && distToBank >= 1.4 && distToHireCleaner >= 1.4 && distToHireManager >= 1.4) {
+  if (distToOrderZone >= 1.3 && distToCookZone >= 1.4 && distToHireChef >= 1.4 && distToHireServer >= 1.4 && distToBuyTable >= 1.4 && distToSupply >= 1.4 && distToRest >= 1.4 && distToBank >= 1.4 && distToHireCleaner >= 1.4 && distToHireManager >= 1.4 && distToUnlockDriveThru >= 1.4) {
     if (state.actionProgress > 0) {
       state.actionProgress = 0;
       updateActionRing(0, pPos);
@@ -1350,6 +1534,21 @@ function animate(now) {
   for (let i = departingCustomers.length - 1; i >= 0; i--) {
     if (!departingCustomers[i].update(dt, gameScene.camera)) {
       departingCustomers.splice(i, 1);
+    }
+  }
+
+  // Drive-Through Traffic Simulation
+  if (state.driveThruUnlocked) {
+    if (!activeDriveThruCar) {
+      carSpawnCooldown -= dt;
+      if (carSpawnCooldown <= 0) {
+        activeDriveThruCar = new DriveThruCar();
+        carSpawnCooldown = 7.0 + Math.random() * 8.0;
+      }
+    } else {
+      if (!activeDriveThruCar.update(dt, gameScene.camera)) {
+        activeDriveThruCar = null;
+      }
     }
   }
 

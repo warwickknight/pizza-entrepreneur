@@ -407,6 +407,15 @@ function getAvailableTableSlot() {
 }
 window.getAvailableTableSlot = getAvailableTableSlot;
 
+function getTableCleaningSpot(cleanerPos, slot) {
+  if (!slot) return new THREE.Vector3();
+  // Table center is (slot.x, slot.z), chairs at x +/- 1.2
+  // Accessible, comfortable cleaning points are at North and South edges of the table
+  const spotNorth = new THREE.Vector3(slot.x, 0, slot.z - 1.45);
+  const spotSouth = new THREE.Vector3(slot.x, 0, slot.z + 1.45);
+  return cleanerPos.distanceTo(spotNorth) < cleanerPos.distanceTo(spotSouth) ? spotNorth : spotSouth;
+}
+
 // --- Rubbish: dirty dining tables + litter dropped by takeaway customers. Walk over it to clean up. ---
 const litterItems = [];
 
@@ -973,34 +982,39 @@ function animate(now) {
     const slot = TABLE_SLOTS[i];
     if (slot) {
       OBSTACLES.push({
-        minX: slot.x - 0.85, maxX: slot.x + 0.85,
-        minZ: slot.z - 0.85, maxZ: slot.z + 0.85
+        minX: slot.x - 0.95, maxX: slot.x + 0.95,
+        minZ: slot.z - 0.95, maxZ: slot.z + 0.95
       });
     }
   }
 
-  // Resolve player collision against solid obstacles
-  const playerRadius = 0.42;
-  OBSTACLES.forEach(obs => {
-    // Find closest point on obstacle to player
-    const closestX = Math.max(obs.minX, Math.min(obs.maxX, player.root.position.x));
-    const closestZ = Math.max(obs.minZ, Math.min(obs.maxZ, player.root.position.z));
-    const dx = player.root.position.x - closestX;
-    const dz = player.root.position.z - closestZ;
-    const distSq = dx * dx + dz * dz;
+  // Resolve collision against solid obstacles (Tables, counters, ovens, bins)
+  function resolveEntityCollision(pos, radius) {
+    OBSTACLES.forEach(obs => {
+      const closestX = Math.max(obs.minX, Math.min(obs.maxX, pos.x));
+      const closestZ = Math.max(obs.minZ, Math.min(obs.maxZ, pos.z));
+      const dx = pos.x - closestX;
+      const dz = pos.z - closestZ;
+      const distSq = dx * dx + dz * dz;
 
-    if (distSq < playerRadius * playerRadius) {
-      const dist = Math.sqrt(distSq);
-      if (dist > 0.0001) {
-        const overlap = playerRadius - dist;
-        player.root.position.x += (dx / dist) * overlap;
-        player.root.position.z += (dz / dist) * overlap;
-      } else {
-        // Fallback ejection
-        player.root.position.z += playerRadius;
+      if (distSq < radius * radius) {
+        const dist = Math.sqrt(distSq);
+        if (dist > 0.0001) {
+          const overlap = radius - dist;
+          pos.x += (dx / dist) * overlap;
+          pos.z += (dz / dist) * overlap;
+        } else {
+          pos.z += radius;
+        }
       }
-    }
-  });
+    });
+  }
+
+  const playerRadius = 0.42;
+  resolveEntityCollision(player.root.position, playerRadius);
+  if (hiredCleaner && hiredCleaner.root && hiredCleaner.root.visible) {
+    resolveEntityCollision(hiredCleaner.root.position, 0.40);
+  }
 
   // Spacious world perimeter: allow full exploration around patio, out to grass lawn and park bench!
   player.root.position.x = Math.max(-10.5, Math.min(17.5, player.root.position.x));
@@ -1527,6 +1541,7 @@ function animate(now) {
     }
 
     const binPos = new THREE.Vector3(9.4, 0, 3.2);
+    const binStandPos = new THREE.Vector3(9.4, 0, 2.1);
     const homePos = new THREE.Vector3(9.4, 0, 2.2);
 
     if (hiredCleaner.state === 'idle') {
@@ -1544,15 +1559,25 @@ function animate(now) {
       if (!hiredCleaner.targetSlot || !hiredCleaner.targetSlot.dirty) {
         hiredCleaner.state = 'idle';
       } else {
-        const targetPos = new THREE.Vector3(hiredCleaner.targetSlot.x, 0, hiredCleaner.targetSlot.z);
-        moveNpcTowards(hiredCleaner, targetPos, 3.2, dt);
-        if (hiredCleaner.root.position.distanceTo(targetPos) < 0.6) {
+        const cleanSpot = getTableCleaningSpot(hiredCleaner.root.position, hiredCleaner.targetSlot);
+        moveNpcTowards(hiredCleaner, cleanSpot, 3.2, dt);
+        if (hiredCleaner.root.position.distanceTo(cleanSpot) < 0.45) {
           hiredCleaner.state = 'cleaning_table';
           hiredCleaner.cleanTimer = 1.6;
+          // Face toward table center to wipe it
+          const dx = hiredCleaner.targetSlot.x - hiredCleaner.root.position.x;
+          const dz = hiredCleaner.targetSlot.z - hiredCleaner.root.position.z;
+          hiredCleaner.root.rotation.y = Math.atan2(dx, dz);
         }
       }
     } else if (hiredCleaner.state === 'cleaning_table') {
       hiredCleaner.cleanTimer -= dt;
+      // Keep facing the table center while wiping
+      if (hiredCleaner.targetSlot) {
+        const dx = hiredCleaner.targetSlot.x - hiredCleaner.root.position.x;
+        const dz = hiredCleaner.targetSlot.z - hiredCleaner.root.position.z;
+        hiredCleaner.root.rotation.y = Math.atan2(dx, dz);
+      }
       hiredCleaner.leftArm.rotation.x = Math.sin(performance.now() * 0.01) * 0.8;
       hiredCleaner.rightArm.rotation.x = -Math.sin(performance.now() * 0.01) * 0.8;
       if (hiredCleaner.cleanTimer <= 0) {
@@ -1579,13 +1604,17 @@ function animate(now) {
         }
       }
     } else if (hiredCleaner.state === 'walk_to_bin') {
-      moveNpcTowards(hiredCleaner, binPos, 3.2, dt);
-      if (hiredCleaner.root.position.distanceTo(binPos) < 0.4) {
+      moveNpcTowards(hiredCleaner, binStandPos, 3.2, dt);
+      if (hiredCleaner.root.position.distanceTo(binStandPos) < 0.45) {
+        hiredCleaner.root.rotation.y = 0; // Face bin
         window.audio.pop();
         showFloatingText(binPos, "♻️ Cleaner Binned Trash!", "#14b8a6");
         hiredCleaner.state = 'idle';
       }
     }
+
+    // Resolve table and obstacle collision for the cleaner every frame
+    resolveEntityCollision(hiredCleaner.root.position, 0.40);
   }
 
   // Assistant Manager Automation (Auto-Restocker)

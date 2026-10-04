@@ -185,10 +185,31 @@ class Customer {
     this.state = 'walk_to_counter';
     this.walkCycle = Math.random() * 10;
 
+    // Families arrive with a child who tags along
+    if (chosen.type === 'family') {
+      this.child = createChibiHuman(gameScene.scene, 0xec4899, 'none', 0.62, 0x3e2723);
+      this.child.root.position.copy(this.char.root.position).add(new THREE.Vector3(0.9, 0, -0.3));
+    }
+
     this.bubble = document.createElement('div');
     this.bubble.className = 'world-bubble bubble-order';
-    this.bubble.innerHTML = `🍕 ${this.archetype.name}`;
+    this.bubble.innerHTML = this.moodHTML();
     this.bubbleContainer.appendChild(this.bubble);
+  }
+
+  // Happy face while patience is above 50%, angry below. Commuters get a clock icon.
+  isAngry() {
+    return (this.patience / this.maxPatience) < 0.5;
+  }
+
+  moodHTML(extra = '') {
+    const clock = this.archetype.type === 'commuter' ? '⏰ ' : '';
+    return `${clock}${this.isAngry() ? '😠' : '😊'}${extra ? ' ' + extra : ''}`;
+  }
+
+  setMoodBubble(extra = '') {
+    this.bubble.className = 'world-bubble ' + (this.isAngry() ? 'bubble-angry' : 'bubble-order');
+    this.bubble.innerHTML = this.moodHTML(extra);
   }
 
   update(dt, camera) {
@@ -201,8 +222,9 @@ class Customer {
       if (this.patience <= 0) {
         // Customer storm-out due to operational bottleneck!
         this.state = 'leaving';
+        this.stormed = true;
         this.bubble.className = 'world-bubble bubble-angry';
-        this.bubble.innerHTML = '😠 Too slow!';
+        this.bubble.innerHTML = '😠';
         window.audio.warningBuzz();
         // Return false to remove from active customer queue and hand over to departing list
         window.departingCustomers && window.departingCustomers.push(this);
@@ -216,11 +238,9 @@ class Customer {
       if (this.char.root.position.distanceTo(dest) < 0.2) {
         if (this.index === 0) {
           this.state = 'waiting_order';
-          this.bubble.className = 'world-bubble bubble-order';
-          this.bubble.innerHTML = `📝 Need ${this.orderPies}x Pie${this.orderPies > 1 ? 's' : ''}`;
+          this.setMoodBubble('🍕'.repeat(this.orderPies));
         } else {
-          this.bubble.className = 'world-bubble bubble-wait';
-          this.bubble.innerHTML = `⏳ #${this.index + 1} (${this.archetype.name})`;
+          this.setMoodBubble();
         }
       }
     } else if (this.state === 'waiting_order') {
@@ -232,12 +252,9 @@ class Customer {
         this.idleAnimation();
       }
       if (this.index === 0) {
-        const pct = Math.max(0, Math.floor((this.patience / this.maxPatience) * 100));
-        this.bubble.className = 'world-bubble bubble-order';
-        this.bubble.innerHTML = `📝 ${this.archetype.name}: ${this.orderPies}x [${pct}%]`;
+        this.setMoodBubble('🍕'.repeat(this.orderPies));
       } else {
-        this.bubble.className = 'world-bubble bubble-wait';
-        this.bubble.innerHTML = `⏳ #${this.index + 1} (${this.archetype.name})`;
+        this.setMoodBubble();
       }
     } else if (this.state === 'waiting_pizza') {
       const dest = new THREE.Vector3(0, 0, queueSlotZ);
@@ -246,9 +263,7 @@ class Customer {
       } else {
         this.idleAnimation();
       }
-      const pct = Math.max(0, Math.floor((this.patience / this.maxPatience) * 100));
-      this.bubble.className = 'world-bubble bubble-wait';
-      this.bubble.innerHTML = `⏳ Baking ${this.remainingPies}x [${pct}%]`;
+      this.setMoodBubble('🔥' + '🍕'.repeat(this.remainingPies));
     } else if (this.state === 'walk_to_table') {
       const tableChairPos = new THREE.Vector3(4.3, 0, -0.8);
       this.moveTowards(tableChairPos, 3.2, dt);
@@ -256,7 +271,7 @@ class Customer {
         this.state = 'eating_at_table';
         this.eatTimer = 7.0; // 7 seconds eating duration
         this.bubble.className = 'world-bubble bubble-done';
-        this.bubble.innerHTML = '🥤 Savoring Meal!';
+        this.bubble.innerHTML = '🥤';
         this.char.root.rotation.y = Math.PI / 2; // Face the dining table
         this.char.leftArm.rotation.x = -0.7;
         this.char.rightArm.rotation.x = -0.7;
@@ -272,15 +287,15 @@ class Customer {
         this.state = 'leaving';
         this.char.head.rotation.x = 0;
         this.bubble.className = 'world-bubble bubble-done';
-        this.bubble.innerHTML = '😋 Delicious! +Tip';
+        this.bubble.innerHTML = '😋';
         window.tableOccupied = false; // Free up table for next dine-in guest!
       }
     } else if (this.state === 'leaving') {
       const exitDest = new THREE.Vector3(14, 0, 7.5);
       this.moveTowards(exitDest, 3.8, dt);
-      if (this.bubble.className !== 'world-bubble bubble-done' && this.bubble.className !== 'world-bubble bubble-angry') {
+      if (!this.stormed && this.bubble.className !== 'world-bubble bubble-done') {
         this.bubble.className = 'world-bubble bubble-done';
-        this.bubble.innerHTML = '😋 Paid!';
+        this.bubble.innerHTML = '😋';
       }
 
       // Customer carries their purchased pizza box(es) happily (if takeaway)
@@ -303,8 +318,29 @@ class Customer {
       }
     }
 
+    this.updateChild(dt);
     this.updateBubblePos(camera);
     return true;
+  }
+
+  // Child trails beside the parent, mirroring walk/idle
+  updateChild(dt) {
+    if (!this.child) return;
+    const c = this.child.root;
+    const target = new THREE.Vector3(0.9, 0, -0.3).add(this.char.root.position);
+    target.y = 0;
+    const before = c.position.clone();
+    c.position.lerp(target, Math.min(1, dt * 6));
+    const moved = c.position.distanceTo(before) / Math.max(dt, 0.0001);
+    c.rotation.y = this.char.root.rotation.y;
+    if (moved > 0.4) {
+      const s = Math.sin(this.walkCycle * 1.3) * 0.6;
+      this.child.leftLeg.rotation.x = s;
+      this.child.rightLeg.rotation.x = -s;
+    } else {
+      this.child.leftLeg.rotation.x = 0;
+      this.child.rightLeg.rotation.x = 0;
+    }
   }
 
   moveTowards(dest, speed, dt) {
@@ -356,6 +392,7 @@ class Customer {
   destroy() {
     if (this.bubble && this.bubble.parentNode) this.bubble.parentNode.removeChild(this.bubble);
     this.gameScene.scene.remove(this.char.root);
+    if (this.child) this.gameScene.scene.remove(this.child.root);
   }
 }
 

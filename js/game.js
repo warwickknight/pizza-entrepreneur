@@ -606,7 +606,7 @@ function animate(now) {
         window.tableOccupied = true;
         frontCust.state = 'walk_to_table';
         frontCust.bubble.className = 'world-bubble bubble-done';
-        frontCust.bubble.innerHTML = '🥤 Dine-In (+Drink $4.50)';
+        frontCust.bubble.innerHTML = '🥤';
       } else {
         frontCust.state = 'leaving';
       }
@@ -873,7 +873,7 @@ function animate(now) {
               window.tableOccupied = true;
               currentFront.state = 'walk_to_table';
               currentFront.bubble.className = 'world-bubble bubble-done';
-              currentFront.bubble.innerHTML = '🥤 Dine-In (+Drink $4.50)';
+              currentFront.bubble.innerHTML = '🥤';
             } else {
               currentFront.state = 'leaving';
             }

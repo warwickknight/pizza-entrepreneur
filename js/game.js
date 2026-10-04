@@ -309,6 +309,10 @@ class DriveThruCar {
         if (!this.honked) {
           this.honked = true;
           window.audio.carHorn();
+          window.audio.orderChit();
+          state.orderTickets += this.totalPies;
+          if (gameScene.chitMesh) gameScene.chitMesh.visible = true;
+          showFloatingText(new THREE.Vector3(-9.2, 1.4, 1.5), `Drive-Thru (${this.totalPies}x 🍕)`, "#facc15");
         }
       }
     } else if (this.state === 'waiting') {
@@ -328,6 +332,12 @@ class DriveThruCar {
         window.audio.carHornAngry();
         this.bubble.className = 'world-bubble bubble-angry';
         this.bubble.innerHTML = '😡💨';
+        if (this.remainingPies > 0) {
+          state.orderTickets = Math.max(0, state.orderTickets - this.remainingPies);
+          if (state.orderTickets === 0 && (!window.getPizzasNeeded || window.getPizzasNeeded() === 0)) {
+            if (gameScene.chitMesh) gameScene.chitMesh.visible = false;
+          }
+        }
       }
     } else if (this.state === 'leaving') {
       // Drives off behind the pizza place (North along -Z)
@@ -415,6 +425,25 @@ function getTableCleaningSpot(cleanerPos, slot) {
   const spotSouth = new THREE.Vector3(slot.x, 0.14, slot.z + 1.45);
   return cleanerPos.distanceTo(spotNorth) < cleanerPos.distanceTo(spotSouth) ? spotNorth : spotSouth;
 }
+
+function getPizzasNeeded() {
+  let needed = 0;
+  // 1. Takeaway front customer waiting for pizza
+  if (typeof customers !== 'undefined' && customers && customers.length > 0) {
+    const front = customers[0];
+    if (front && front.state === 'waiting_pizza') {
+      const serverCarrying = (hiredServer && hiredServer.carrying) ? hiredServer.carrying : 0;
+      needed += Math.max(0, (front.remainingPies || 1) - serverCarrying);
+    }
+  }
+  // 2. Drive-thru car waiting at window
+  if (state.driveThruUnlocked && activeDriveThruCar && activeDriveThruCar.state === 'waiting') {
+    const dtServerCarrying = (hiredDriveThruServer && hiredDriveThruServer.carrying) ? hiredDriveThruServer.carrying : 0;
+    needed += Math.max(0, (activeDriveThruCar.remainingPies || 1) - dtServerCarrying);
+  }
+  return needed;
+}
+window.getPizzasNeeded = getPizzasNeeded;
 
 // --- Rubbish: dirty dining tables + litter dropped by takeaway customers. Walk over it to clean up. ---
 const litterItems = [];
@@ -1045,7 +1074,9 @@ function animate(now) {
 
   // Step 2: Dough Toss & Baking (if no chef)
   const distToCookZone = pPos.distanceTo(zoneCook.group.position);
-  if (!state.chefHired && distToCookZone < 1.4 && state.orderTickets > 0 && state.readyBoxesOnTable < MAX_TABLE_BOXES) {
+  const pizzasNeededManual = getPizzasNeeded();
+  const effectiveTicketsManual = Math.max(state.orderTickets, Math.max(0, pizzasNeededManual - state.readyBoxesOnTable));
+  if (!state.chefHired && distToCookZone < 1.4 && effectiveTicketsManual > 0 && state.readyBoxesOnTable < MAX_TABLE_BOXES) {
     if (!gameState.hasIngredientsForPizza()) {
       updateActionRing(0, pPos);
       gameScene.doughMesh.visible = false;
@@ -1068,10 +1099,11 @@ function animate(now) {
         state.actionProgress = 0;
         gameScene.doughMesh.visible = false;
         if (gameState.consumeIngredientsForPizza()) {
-          state.orderTickets--;
+          state.orderTickets = Math.max(0, state.orderTickets - 1);
           state.readyBoxesOnTable++;
           syncTableBoxesVisual(state.readyBoxesOnTable);
-          if (state.orderTickets === 0) gameScene.chitMesh.visible = false;
+          const remainingTickets = Math.max(state.orderTickets, Math.max(0, getPizzasNeeded() - state.readyBoxesOnTable));
+          if (remainingTickets === 0 && gameScene.chitMesh) gameScene.chitMesh.visible = false;
           window.audio.ovenSizzle();
           showFloatingText(zoneCook.group.position, "🍕 Baked & Boxed!", "#f97316");
         }
@@ -1400,7 +1432,10 @@ function animate(now) {
       state.dailyWages += state.chefWagePerSec * dt;
     }
 
-    if (state.orderTickets > 0 && state.readyBoxesOnTable < MAX_TABLE_BOXES) {
+    const pizzasNeeded = getPizzasNeeded();
+    const effectiveTickets = Math.max(state.orderTickets, Math.max(0, pizzasNeeded - state.readyBoxesOnTable));
+
+    if (effectiveTickets > 0 && state.readyBoxesOnTable < MAX_TABLE_BOXES) {
       if (!gameState.hasIngredientsForPizza()) {
         // Chef can't cook without ingredients
         hiredChef.leftArm.rotation.x = 0;
@@ -1417,16 +1452,18 @@ function animate(now) {
         if (state.chefBakeTimer >= 2.0) {
           state.chefBakeTimer = 0;
           if (gameState.consumeIngredientsForPizza()) {
-            state.orderTickets--;
+            state.orderTickets = Math.max(0, state.orderTickets - 1);
             state.readyBoxesOnTable++;
             syncTableBoxesVisual(state.readyBoxesOnTable);
-            if (state.orderTickets === 0) gameScene.chitMesh.visible = false;
+            const remainingTickets = Math.max(state.orderTickets, Math.max(0, getPizzasNeeded() - state.readyBoxesOnTable));
+            if (remainingTickets === 0 && gameScene.chitMesh) gameScene.chitMesh.visible = false;
             window.audio.ovenSizzle();
             showFloatingText(zoneCook.group.position, "Chef Baked Pie!", "#a855f7");
           }
         }
       }
     } else {
+      if (effectiveTickets === 0 && gameScene.chitMesh) gameScene.chitMesh.visible = false;
       // Idle bored animation on slow shifts (scratch head / idle arms)
       hiredChef.leftArm.rotation.x = Math.sin(now * 0.002) * 0.15;
       hiredChef.rightArm.rotation.x = Math.cos(now * 0.002) * 0.15;
@@ -1443,9 +1480,18 @@ function animate(now) {
     const serverSpeed = 4.0;
     const currentFront = customers[0];
 
+    // Check how many boxes are currently claimed by DT server
+    const dtClaiming = (hiredDriveThruServer && hiredDriveThruServer.state === 'fetching_pizza') ? 1 : 0;
+    const availableForFront = state.readyBoxesOnTable - dtClaiming;
+
     if (hiredServer.state === 'idle') {
-      if (currentFront && currentFront.state === 'waiting_order') hiredServer.state = 'taking_order';
-      else if (state.readyBoxesOnTable > 0 && currentFront && currentFront.state === 'waiting_pizza') hiredServer.state = 'fetching_pizza';
+      if (currentFront && currentFront.state === 'waiting_order') {
+        hiredServer.state = 'taking_order';
+      } else if (currentFront && currentFront.state === 'waiting_pizza') {
+        if (availableForFront > 0) {
+          hiredServer.state = 'fetching_pizza';
+        }
+      }
     } else if (hiredServer.state === 'taking_order') {
       const dest = new THREE.Vector3(0, 0, 1.8);
       moveNpcTowards(hiredServer, dest, serverSpeed, dt);
@@ -1453,7 +1499,7 @@ function animate(now) {
         if (currentFront && currentFront.state === 'waiting_order') {
           state.orderTickets += currentFront.orderPies;
           currentFront.state = 'waiting_pizza';
-          gameScene.chitMesh.visible = true;
+          if (gameScene.chitMesh) gameScene.chitMesh.visible = true;
           window.audio.orderChit();
           showFloatingText(hiredServer.root.position, `Server took order (${currentFront.orderPies}x)`, "#ec4899");
         }
@@ -1469,7 +1515,14 @@ function animate(now) {
           hiredServer.carrying = 1;
           hiredServer.state = 'serving';
           updateServerCarryingVisual();
-        } else hiredServer.state = 'idle';
+        } else {
+          // If pizza was taken, ensure tickets are queued so chef bakes immediately
+          if (currentFront && currentFront.state === 'waiting_pizza') {
+            state.orderTickets = Math.max(state.orderTickets, currentFront.remainingPies);
+            if (gameScene.chitMesh) gameScene.chitMesh.visible = true;
+          }
+          hiredServer.state = 'idle';
+        }
       }
     } else if (hiredServer.state === 'serving') {
       const dest = new THREE.Vector3(0, 0, 1.8);
@@ -1525,6 +1578,14 @@ function animate(now) {
             departingCustomers.push(currentFront);
             customers.shift();
             customers.forEach((c, idx) => c.index = idx);
+          }
+        } else {
+          // Customer left or was already served by player
+          if (hiredServer.carrying > 0) {
+            state.readyBoxesOnTable = Math.min(MAX_TABLE_BOXES, state.readyBoxesOnTable + 1);
+            syncTableBoxesVisual(state.readyBoxesOnTable);
+            hiredServer.carrying = 0;
+            updateServerCarryingVisual();
           }
         }
         hiredServer.state = 'idle';
@@ -1656,8 +1717,12 @@ function animate(now) {
     const windowStandPos = new THREE.Vector3(-8.2, 0, 1.5);
     const tableDest = new THREE.Vector3(0, 0, -3.2);
 
+    // Check how many boxes are currently claimed by counter server
+    const frontClaiming = (hiredServer && hiredServer.state === 'fetching_pizza') ? 1 : 0;
+    const availableForDt = state.readyBoxesOnTable - frontClaiming;
+
     if (hiredDriveThruServer.state === 'idle') {
-      if (activeDriveThruCar && activeDriveThruCar.state === 'waiting' && state.readyBoxesOnTable > 0) {
+      if (activeDriveThruCar && activeDriveThruCar.state === 'waiting' && availableForDt > 0) {
         hiredDriveThruServer.state = 'fetching_pizza';
       } else {
         if (hiredDriveThruServer.root.position.distanceTo(windowStandPos) > 0.15) {
@@ -1676,6 +1741,11 @@ function animate(now) {
           updateDriveThruServerCarryingVisual();
           hiredDriveThruServer.state = 'serving';
         } else {
+          // If pizza was taken, ensure tickets are queued so chef bakes immediately
+          if (activeDriveThruCar && activeDriveThruCar.state === 'waiting') {
+            state.orderTickets = Math.max(state.orderTickets, activeDriveThruCar.remainingPies);
+            if (gameScene.chitMesh) gameScene.chitMesh.visible = true;
+          }
           hiredDriveThruServer.state = 'idle';
         }
       }

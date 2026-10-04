@@ -221,6 +221,12 @@ class Customer {
       this.patience -= dt;
       if (this.patience <= 0) {
         // Customer storm-out due to operational bottleneck!
+        if (this.state === 'waiting_pizza' && this.remainingPies > 0 && window.state) {
+          window.state.orderTickets = Math.max(0, window.state.orderTickets - this.remainingPies);
+          if (window.state.orderTickets === 0 && (!window.getPizzasNeeded || window.getPizzasNeeded() === 0)) {
+            if (window.gameScene && window.gameScene.chitMesh) window.gameScene.chitMesh.visible = false;
+          }
+        }
         this.state = 'leaving';
         this.stormed = true;
         this.bubble.className = 'world-bubble bubble-angry';

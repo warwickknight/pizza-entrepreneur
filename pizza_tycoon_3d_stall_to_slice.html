@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Pizza Tycoon 3D: Stall to Slice</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Google Fonts: Fredoka & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            fredoka: ['Fredoka', 'sans-serif'],
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --primary: #f97316;
+      --secondary: #10b981;
+      --dark: #0f172a;
+      --surface: rgba(15, 23, 42, 0.94);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0b1120;
+      touch-action: none;
+      overscroll-behavior-y: contain;
+    }
+
+    #webgl-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Floating 3D-to-2D Billboard Customer Speeches (Ultra High Contrast) */
+    .world-bubble {
+      position: absolute;
+      transform: translate(-50%, -100%);
+      padding: 6px 11px;
+      border-radius: 12px;
+      font-size: 0.82rem;
+      font-weight: 800;
+      pointer-events: none;
+      z-index: 12;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.75), 0 2px 4px rgba(0, 0, 0, 0.5);
+      transition: opacity 0.2s;
+      white-space: nowrap;
+      font-family: 'Fredoka', sans-serif;
+      letter-spacing: 0.02em;
+    }
+
+    .bubble-order { background: #fef08a; color: #0f172a; border: 2px solid #ca8a04; text-shadow: none; }
+    .bubble-wait { background: #0284c7; color: #ffffff; border: 2px solid #7dd3fc; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+    .bubble-done { background: #059669; color: #ffffff; border: 2px solid #6ee7b7; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+    .bubble-angry { background: #dc2626; color: #ffffff; border: 2px solid #fecaca; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+
+    /* Action Progress Ring Overlay */
+    #action-ring {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 58px;
+      height: 58px;
+      pointer-events: none;
+      z-index: 15;
+      display: none;
+    }
+
+    /* Modal Animation */
+    #pl-modal {
+      opacity: 0;
+      transform: scale(0.95);
+      pointer-events: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #pl-modal.active {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
+
+    /* Floating Text Feedback */
+    .float-text {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 800;
+      font-size: 1.05rem;
+      pointer-events: none;
+      z-index: 30;
+      animation: floatUp 1.25s forwards cubic-bezier(0.1, 0.8, 0.2, 1);
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 1), 0 0 4px rgba(0, 0, 0, 0.9);
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 0; transform: translate(-50%, 0) scale(0.75); }
+      18% { opacity: 1; transform: translate(-50%, -12px) scale(1.08); }
+      100% { opacity: 0; transform: translate(-50%, -54px) scale(0.92); }
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans h-screen w-screen overflow-hidden flex flex-col justify-center items-center">
+
+  <!-- 3D Canvas -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- 2D Projected Billboards -->
+  <div id="bubble-container" class="absolute inset-0 pointer-events-none z-10 overflow-hidden"></div>
+
+  <!-- Dynamic Virtual Joystick -->
+  <div id="joystick-zone" class="absolute inset-0 z-20">
+    <div id="joystick-base" class="absolute w-24 h-24 rounded-full bg-white/10 border-2 border-white/25 -translate-x-1/2 -translate-y-1/2 pointer-events-none hidden z-20 backdrop-blur-sm shadow-xl">
+      <div id="joystick-stick" class="absolute w-11 h-11 rounded-full bg-gradient-to-tr from-amber-600 to-amber-400 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 shadow-lg border border-white/40"></div>
+    </div>
+  </div>
+
+  <!-- TOP HUD -->
+  <header class="absolute top-3 inset-x-3 z-30 flex justify-between items-start pointer-events-none gap-2">
+    <!-- Capital Card -->
+    <div class="pointer-events-auto bg-slate-900/95 border-2 border-slate-700 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-2xl flex flex-col gap-1">
+      <div class="text-[10px] uppercase tracking-wider text-slate-300 font-extrabold">Operating Capital</div>
+      <div class="font-fredoka text-emerald-300 text-2xl font-black flex items-center gap-1 leading-none drop-shadow">
+        <span>$</span><span id="cash-amount">25.00</span>
+      </div>
+      <div class="flex items-center gap-2.5 text-xs text-slate-200 pt-0.5 font-mono font-bold">
+        <span>Pizzas: <b id="hud-sold" class="text-white bg-slate-850 px-1 rounded">0</b></span>
+        <span>Orders: <b id="hud-tickets" class="text-amber-300 bg-slate-850 px-1 rounded">0</b></span>
+      </div>
+      <!-- Phase 2 Raw Inventory Indicator -->
+      <div id="hud-inventory" class="flex items-center gap-2.5 text-xs font-fredoka pt-1.5 border-t border-slate-700 text-white font-bold">
+        <span title="Dough Portions" class="flex items-center gap-0.5">🍞 <b id="inv-dough" class="text-amber-200 font-mono">15</b></span>
+        <span title="Tomato Sauce Portions" class="flex items-center gap-0.5">🍅 <b id="inv-sauce" class="text-red-300 font-mono">15</b></span>
+        <span title="Cheese Portions (Perishable)" class="flex items-center gap-0.5">🧀 <b id="inv-cheese" class="text-yellow-200 font-mono">15</b></span>
+      </div>
+      <!-- Phase 3 Work-Life: Stamina & Morale Meters -->
+      <div class="pt-1.5 border-t border-slate-700 space-y-1.5 text-xs font-fredoka">
+        <div>
+          <div class="flex justify-between items-center text-slate-200 text-[10px] font-bold">
+            <span class="flex items-center gap-1">⚡ Founder Energy</span>
+            <span id="hud-energy-text" class="text-amber-300 font-black">100%</span>
+          </div>
+          <div class="w-full h-2 bg-slate-950 border border-slate-700 rounded-full overflow-hidden mt-0.5">
+            <div id="hud-energy-bar" class="h-full bg-gradient-to-r from-amber-400 to-yellow-300 transition-all duration-300" style="width: 100%;"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between items-center text-slate-200 text-[10px] font-bold">
+            <span class="flex items-center gap-1">❤️ Family Morale</span>
+            <span id="hud-morale-text" class="text-pink-300 font-black">80%</span>
+          </div>
+          <div class="w-full h-2 bg-slate-950 border border-slate-700 rounded-full overflow-hidden mt-0.5">
+            <div id="hud-morale-bar" class="h-full bg-gradient-to-r from-rose-500 to-pink-400 transition-all duration-300" style="width: 80%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions: Bank Loan, Menu Pricing, Supplies, Rota, Marketing, P&L Report, Sound, Reset -->
+    <div class="pointer-events-auto flex items-center gap-1.5 flex-wrap justify-end">
+      <div id="hud-calendar" class="px-3 py-2 bg-slate-900/95 border-2 border-slate-700 rounded-xl shadow-xl flex items-center gap-1.5 text-xs font-fredoka font-bold text-white backdrop-blur-md">
+        <span id="weather-icon" class="text-sm">☀️</span>
+        <span id="day-badge" class="font-extrabold text-amber-300">Mon (W1 D1)</span>
+      </div>
+
+      <button id="btn-loan" title="Micro-Loans & Debt Servicing" class="px-3 py-2 bg-slate-900/95 hover:bg-slate-800 active:scale-95 text-teal-300 font-fredoka font-bold text-xs rounded-xl shadow-xl border-2 border-teal-500/60 backdrop-blur-md flex items-center gap-1.5 transition">
+        <span>🏦</span> <span>Bank</span>
+      </button>
+
+      <button id="btn-supply" title="Order Ingredients & Manage Supply Chain" class="px-3 py-2 bg-slate-900/95 hover:bg-slate-800 active:scale-95 text-emerald-300 font-fredoka font-bold text-xs rounded-xl shadow-xl border-2 border-emerald-500/60 backdrop-blur-md flex items-center gap-1.5 transition">
+        <span>📦</span> <span>Supplies</span>
+      </button>
+
+      <button id="btn-pricing" title="Menu Pricing & Elasticity" class="px-3 py-2 bg-slate-900/95 hover:bg-slate-800 active:scale-95 text-amber-300 font-fredoka font-bold text-xs rounded-xl shadow-xl border-2 border-amber-500/60 backdrop-blur-md flex items-center gap-1.5 transition">
+        <span>💲</span> <span id="hud-price-tag" class="font-extrabold">$16.00</span>
+      </button>
+
+      <button id="btn-rota" title="Manage Staff Shifts" class="px-3 py-2 bg-slate-900/95 hover:bg-slate-800 active:scale-95 text-purple-300 font-fredoka font-bold text-xs rounded-xl shadow-xl border-2 border-purple-500/60 backdrop-blur-md flex items-center gap-1.5 transition">
+        <span>📋</span> <span>Rota</span>
+      </button>
+
+      <button id="btn-marketing" title="Launch Ad Campaigns" class="px-3 py-2 bg-slate-900/95 hover:bg-slate-800 active:scale-95 text-sky-300 font-fredoka font-bold text-xs rounded-xl shadow-xl border-2 border-sky-500/60 backdrop-blur-md flex items-center gap-1.5 transition">
+        <span>📢</span> <span>Ads</span>
+      </button>
+
+      <button id="btn-pl" class="px-3 py-2 bg-slate-900/95 hover:bg-slate-800 active:scale-95 text-yellow-300 font-fredoka font-bold text-xs rounded-xl shadow-xl border-2 border-yellow-500/60 backdrop-blur-md flex items-center gap-1.5 transition">
+        <span>📊</span> <span>P&amp;L</span>
+      </button>
+
+      <button id="btn-sound" class="p-2.5 bg-slate-900/95 hover:bg-slate-800 active:scale-95 text-white text-xs rounded-xl shadow-xl border-2 border-slate-700 backdrop-blur-md transition">
+        <span id="sound-icon">🔊</span>
+      </button>
+
+      <button id="btn-reset" title="Reset Save Data" class="p-2.5 bg-slate-900/95 hover:bg-red-950 active:scale-95 text-slate-300 hover:text-red-300 text-xs rounded-xl shadow-xl border-2 border-slate-700 backdrop-blur-md transition">
+        <span>🔄</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Dynamic Operational Objective Banner (Ultra Crisp Contrast) -->
+  <div id="objective-banner" class="absolute top-24 left-1/2 -translate-x-1/2 z-30 pointer-events-none bg-slate-950/95 border-2 border-amber-400 backdrop-blur-md px-4 py-2 rounded-full shadow-2xl flex items-center gap-2.5 transition-all">
+    <span id="step-badge" class="bg-amber-400 text-slate-950 font-fredoka font-black text-xs px-2.5 py-0.5 rounded-lg uppercase tracking-wider shadow">STEP 1</span>
+    <span id="step-desc" class="font-fredoka text-white text-xs font-bold whitespace-nowrap">Stand at the Counter to take Customer Order</span>
+  </div>
+
+  <!-- Radial Progress -->
+  <svg id="action-ring" viewBox="0 0 36 36">
+    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="4" />
+    <path id="ring-progress" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#f97316" stroke-width="4" stroke-dasharray="0, 100" />
+  </svg>
+
+  <!-- Bottom Staff & Control Badges -->
+  <footer class="absolute bottom-3 inset-x-3 z-30 pointer-events-none flex justify-between items-end">
+    <div class="pointer-events-auto bg-slate-900/80 backdrop-blur-md border border-slate-800 text-[10px] text-slate-300 px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-2">
+      <span>🕹️ Move Chef</span>
+      <span id="campaign-badge" class="hidden px-2 py-0.5 bg-sky-500/20 text-sky-300 border border-sky-400/30 rounded font-bold animate-pulse">📢 Promo Active</span>
+    </div>
+
+    <div id="staff-roster" class="pointer-events-auto flex gap-1 text-[11px]">
+      <span id="badge-chef" class="bg-purple-950/80 border border-purple-500/40 text-purple-300 px-2 py-1 rounded-xl shadow hidden font-medium">👨‍🍳 Chef Active</span>
+      <span id="badge-server" class="bg-pink-950/80 border border-pink-500/40 text-pink-300 px-2 py-1 rounded-xl shadow hidden font-medium">🛎️ Server Active</span>
+    </div>
+  </footer>
+
+  <!-- Phase 2: Supply Chain & Restock Modal -->
+  <div id="supply-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm p-4 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-200">
+    <div class="bg-slate-900 border border-emerald-500/30 rounded-3xl w-full max-w-md p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📦</span>
+          <div>
+            <h3 class="font-fredoka text-base font-bold text-emerald-400 leading-tight">Supply Chain &amp; Bulk Purchasing</h3>
+            <p class="text-[10px] text-slate-400">Inventory Liquidity vs. Unit Cost of Goods (COGS)</p>
+          </div>
+        </div>
+        <button id="btn-close-supply" class="text-slate-400 hover:text-white text-xl font-bold p-1">✕</button>
+      </div>
+
+      <!-- Current Stock Levels -->
+      <div class="bg-slate-950 rounded-2xl p-3 border border-slate-800 space-y-2">
+        <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Current Walk-in Stockroom</div>
+        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+          <div class="bg-slate-900 p-2 rounded-xl border border-slate-800">
+            <div class="text-lg">🍞</div>
+            <div class="font-bold text-slate-200">Dough Flour</div>
+            <div id="modal-inv-dough" class="text-amber-300 font-mono font-bold text-sm">15 / 60</div>
+          </div>
+          <div class="bg-slate-900 p-2 rounded-xl border border-slate-800">
+            <div class="text-lg">🍅</div>
+            <div class="font-bold text-slate-200">San Marzano</div>
+            <div id="modal-inv-sauce" class="text-red-400 font-mono font-bold text-sm">15 / 60</div>
+          </div>
+          <div class="bg-slate-900 p-2 rounded-xl border border-slate-800">
+            <div class="text-lg">🧀</div>
+            <div class="font-bold text-slate-200">Mozzarella</div>
+            <div id="modal-inv-cheese" class="text-yellow-300 font-mono font-bold text-sm">15 / 60</div>
+            <div id="cheese-spoilage-risk" class="text-[9px] text-rose-400 font-semibold mt-0.5">⚠️ Perishable</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Purchasing Options: Daily Batch vs Wholesale Pallet -->
+      <div class="space-y-2 text-xs">
+        <!-- Daily Batch -->
+        <div class="p-3 bg-slate-950 border border-slate-800 rounded-2xl flex justify-between items-center gap-3">
+          <div>
+            <div class="font-bold text-slate-200 flex items-center gap-1">🛒 Small Daily Restock Batch</div>
+            <div class="text-[10px] text-slate-400">+10 Dough, +10 Sauce, +10 Cheese · High $2.20/unit COGS</div>
+          </div>
+          <button id="btn-buy-daily-batch" class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 active:scale-95 text-white font-fredoka font-bold rounded-xl text-xs shadow whitespace-nowrap">
+            Buy ($22)
+          </button>
+        </div>
+
+        <!-- Wholesale Pallet -->
+        <div class="p-3 bg-slate-950 border border-amber-500/30 bg-gradient-to-r from-slate-950 to-amber-950/20 rounded-2xl flex justify-between items-center gap-3">
+          <div>
+            <div class="font-bold text-amber-300 flex items-center gap-1">📦 Wholesale Delivery Pallet</div>
+            <div class="text-[10px] text-slate-400">+35 Dough, +35 Sauce, +35 Cheese · Low $1.40/unit COGS (Best Value)</div>
+          </div>
+          <button id="btn-buy-wholesale-pallet" class="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 active:scale-95 text-slate-950 font-fredoka font-bold rounded-xl text-xs shadow whitespace-nowrap">
+            Pallet ($49)
+          </button>
+        </div>
+
+        <!-- Commercial Refrigeration Cooler Upgrade -->
+        <div class="p-3 bg-slate-950 border border-sky-500/30 rounded-2xl flex justify-between items-center gap-3">
+          <div>
+            <div class="font-bold text-sky-300 flex items-center gap-1">❄️ Walk-in Cooler Compressor</div>
+            <div id="fridge-desc" class="text-[10px] text-slate-400">Eliminates overnight cheese spoilage and waste write-offs</div>
+          </div>
+          <button id="btn-buy-fridge" class="px-3.5 py-2 bg-sky-700 hover:bg-sky-600 active:scale-95 text-white font-fredoka font-bold rounded-xl text-xs shadow whitespace-nowrap">
+            Install ($30)
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-2.5 text-[11px] text-emerald-300 leading-tight">
+        <b>💡 Economic Insight: Working Capital</b>
+        Buying wholesale dramatically lowers per-pizza food costs, leaving more gross margin for profits. However, ordering too much before slow rainstorms ties up cash and risks cheese spoilage!
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 2: Menu Pricing & Demand Elasticity Modal -->
+  <div id="pricing-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm p-4 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-200">
+    <div class="bg-slate-900 border border-amber-500/30 rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">💲</span>
+          <div>
+            <h3 class="font-fredoka text-base font-bold text-amber-400 leading-tight">Menu Pricing Elasticity</h3>
+            <p class="text-[10px] text-slate-400">Price vs. Footfall Volume Trade-off</p>
+          </div>
+        </div>
+        <button id="btn-close-pricing" class="text-slate-400 hover:text-white text-xl font-bold p-1">✕</button>
+      </div>
+
+      <div class="bg-slate-950 rounded-2xl p-4 border border-slate-800 space-y-3 text-center">
+        <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Retail Pizza Price</div>
+        <div id="slider-price-display" class="font-fredoka text-3xl font-bold text-amber-300">$16.00</div>
+
+        <input id="price-slider" type="range" min="10" max="26" step="1" value="16" class="w-full accent-amber-500 cursor-pointer">
+
+        <div class="flex justify-between text-[10px] font-mono text-slate-400">
+          <span>$10 (High Volume)</span>
+          <span>$16 (Baseline)</span>
+          <span>$26 (High Margin)</span>
+        </div>
+      </div>
+
+      <!-- Live Elasticity Estimation Box -->
+      <div class="bg-slate-950 rounded-2xl p-3 border border-slate-800 space-y-2 text-xs">
+        <div class="flex justify-between text-slate-300">
+          <span>Estimated Customer Footfall:</span>
+          <span id="elasticity-traffic" class="font-bold text-emerald-400">100% (Normal)</span>
+        </div>
+        <div class="flex justify-between text-slate-300">
+          <span>Gross Margin Per Pie:</span>
+          <span id="elasticity-margin" class="font-bold text-amber-300">$12.50 (78%)</span>
+        </div>
+        <div class="flex justify-between text-slate-400 text-[10px]">
+          <span>Operational Effect:</span>
+          <span id="elasticity-summary" class="text-right text-slate-300">Balanced queue length</span>
+        </div>
+      </div>
+
+      <div class="bg-amber-950/20 border border-amber-500/20 rounded-xl p-2.5 text-[11px] text-amber-300 leading-tight">
+        <b>💡 Microeconomics Rule:</b> Slashing price to $10 floods your stall with queues, which will cause walkouts if you don't have hired staff! Raising price to $26 makes each customer lucrative, ideal for solo founders with limited stamina.
+      </div>
+
+      <button id="btn-apply-pricing" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-fredoka font-bold text-sm rounded-xl shadow-lg transition active:scale-95">
+        Set Menu Price
+      </button>
+    </div>
+  </div>
+
+  <!-- Phase 3: Bank Micro-Loan & Debt Servicing Modal -->
+  <div id="loan-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm p-4 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-200">
+    <div class="bg-slate-900 border border-teal-500/30 rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🏦</span>
+          <div>
+            <h3 class="font-fredoka text-base font-bold text-teal-400 leading-tight">First Street Pizzeria Bank</h3>
+            <p class="text-[10px] text-slate-400">Working Capital Loans &amp; Daily Debt Service</p>
+          </div>
+        </div>
+        <button id="btn-close-loan" class="text-slate-400 hover:text-white text-xl font-bold p-1">✕</button>
+      </div>
+
+      <!-- Outstanding Debt Card -->
+      <div class="bg-slate-950 rounded-2xl p-4 border border-slate-800 space-y-2 text-center">
+        <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Outstanding Debt Balance</div>
+        <div id="loan-balance-display" class="font-fredoka text-3xl font-bold text-rose-400">$0.00</div>
+        <div class="text-[10px] text-slate-400 font-mono">Daily Interest: <b class="text-rose-300">8.0% per shift</b> (Deducted each morning)</div>
+      </div>
+
+      <div class="space-y-2.5 text-xs">
+        <!-- Borrow $200 Micro-Loan -->
+        <div class="p-3 bg-slate-950 border border-teal-500/30 rounded-2xl flex justify-between items-center gap-2">
+          <div>
+            <div class="font-bold text-teal-300">💵 Take $200 Micro-Loan</div>
+            <div class="text-[10px] text-slate-400">Instant capital to hire staff or bulk restock</div>
+          </div>
+          <button id="btn-borrow-loan" class="px-3.5 py-2 bg-teal-600 hover:bg-teal-500 active:scale-95 text-slate-950 font-fredoka font-bold rounded-xl text-xs shadow whitespace-nowrap">
+            Borrow $200
+          </button>
+        </div>
+
+        <!-- Repay Debt -->
+        <div class="p-3 bg-slate-950 border border-slate-800 rounded-2xl flex justify-between items-center gap-2">
+          <div>
+            <div class="font-bold text-slate-200">💳 Repay Principal ($50)</div>
+            <div class="text-[10px] text-slate-400">Pay down debt to eliminate daily interest fees</div>
+          </div>
+          <button id="btn-repay-loan" class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 active:scale-95 text-white font-fredoka font-bold rounded-xl text-xs shadow whitespace-nowrap">
+            Pay $50
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-teal-950/20 border border-teal-500/20 rounded-xl p-2.5 text-[11px] text-teal-300 leading-tight">
+        <b>💡 Debt Leverage Lesson:</b> Borrowing lets you scale production faster (hiring a chef early), but failure to generate sufficient sales can trap you in crippling interest payments!
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 3: End-of-Shift Founder Dilemma Modal (High Contrast & z-index fix) -->
+  <div id="dilemma-modal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md p-4 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
+    <div class="bg-slate-900 border-2 border-amber-400 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4">
+      <div class="flex items-center gap-3 pb-3 border-b border-slate-700">
+        <span id="dilemma-icon" class="text-3xl">🎭</span>
+        <div>
+          <span class="text-[11px] uppercase font-bold text-amber-300 tracking-wider">End-of-Shift Founder Dilemma</span>
+          <h3 id="dilemma-title" class="font-fredoka text-xl font-bold text-white leading-tight">Daughter's School Play</h3>
+        </div>
+      </div>
+
+      <p id="dilemma-desc" class="text-sm font-medium text-slate-100 leading-relaxed bg-slate-950 p-3.5 rounded-2xl border border-slate-800">
+        Your daughter is performing the lead role in her school play tonight during the dinner rush. Do you close the counter early to attend, or keep baking to pay suppliers?
+      </p>
+
+      <!-- Choice Buttons with crisp contrast -->
+      <div class="space-y-3 pt-1">
+        <button id="btn-dilemma-opt-a" type="button" onclick="window.resolveDilemma && window.resolveDilemma('A')" class="w-full text-left p-4 bg-slate-950 hover:bg-slate-850 border-2 border-amber-400/90 hover:border-amber-300 rounded-2xl transition shadow-lg group active:scale-[0.98] cursor-pointer">
+          <div id="dilemma-opt-a-title" class="font-fredoka font-bold text-sm text-amber-300 group-hover:text-amber-200">Attend the Play (Close Early)</div>
+          <div id="dilemma-opt-a-consequence" class="text-xs text-emerald-300 font-semibold mt-1">+25 Family Morale · +20 Energy · -$15 Lost Revenue</div>
+        </button>
+
+        <button id="btn-dilemma-opt-b" type="button" onclick="window.resolveDilemma && window.resolveDilemma('B')" class="w-full text-left p-4 bg-slate-950 hover:bg-slate-850 border-2 border-indigo-400/90 hover:border-indigo-300 rounded-2xl transition shadow-lg group active:scale-[0.98] cursor-pointer">
+          <div id="dilemma-opt-b-title" class="font-fredoka font-bold text-sm text-indigo-300 group-hover:text-indigo-200">Stay Open for the Rush</div>
+          <div id="dilemma-opt-b-consequence" class="text-xs text-amber-200 font-semibold mt-1">+$30 Evening Sales · -20 Family Morale · -15 Energy</div>
+        </button>
+      </div>
+
+      <div class="text-[11px] text-center font-medium text-slate-300 pt-1">
+        Your choices affect Founder Energy, Family Morale, and Long-Term Business Longevity.
+      </div>
+    </div>
+  </div>
+
+  <!-- 1. Manager's Rota Clipboard Modal -->
+  <div id="rota-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm p-4 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-200">
+    <div class="bg-slate-900 border border-purple-500/30 rounded-3xl w-full max-w-md p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📋</span>
+          <div>
+            <h3 class="font-fredoka text-base font-bold text-purple-400 leading-tight">Weekly Staff Rota</h3>
+            <p class="text-[10px] text-slate-400">Fixed Shift Commitment vs. Forecasted Demand</p>
+          </div>
+        </div>
+        <button id="btn-close-rota" type="button" onclick="const m=document.getElementById('rota-modal'); if(m){ m.classList.add('opacity-0','pointer-events-none'); m.classList.remove('opacity-100','pointer-events-auto'); if(window.onCloseRotaModal) window.onCloseRotaModal(); }" class="text-slate-400 hover:text-white hover:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold p-1 transition cursor-pointer">✕</button>
+      </div>
+
+      <!-- 3-Day Forecast Widget -->
+      <div class="bg-slate-950 rounded-2xl p-3 border border-slate-800 space-y-1.5">
+        <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">3-Day Weather &amp; Footfall Forecast</div>
+        <div id="forecast-grid" class="grid grid-cols-3 gap-2 text-center text-xs"></div>
+      </div>
+
+      <!-- Staff Schedules Grid -->
+      <div class="space-y-2.5 text-xs">
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-purple-300 flex items-center gap-1">👨‍🍳 Chef ($0.15/s shift wage)</span>
+            <span id="chef-hired-status" class="text-[10px] text-slate-500">Not Hired Yet</span>
+          </div>
+          <div id="chef-days-row" class="grid grid-cols-7 gap-1 text-center font-fredoka text-[11px]"></div>
+        </div>
+
+        <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-pink-300 flex items-center gap-1">🛎️ Server ($0.12/s shift wage)</span>
+            <span id="server-hired-status" class="text-[10px] text-slate-500">Not Hired Yet</span>
+          </div>
+          <div id="server-days-row" class="grid grid-cols-7 gap-1 text-center font-fredoka text-[11px]"></div>
+        </div>
+      </div>
+
+      <div class="bg-purple-950/20 border border-purple-500/20 rounded-xl p-2.5 text-[11px] text-purple-300 leading-tight">
+        <b>💡 Labor Cost Rule:</b> Scheduled staff are paid committed shift wages even during slow rainy days. Match staff to Friday night rushes and run solo on slow Mondays to maximize profit!
+      </div>
+
+      <button id="btn-confirm-rota" type="button" onclick="const m=document.getElementById('rota-modal'); if(m){ m.classList.add('opacity-0','pointer-events-none'); m.classList.remove('opacity-100','pointer-events-auto'); if(window.onCloseRotaModal) window.onCloseRotaModal(); }" class="w-full py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-fredoka font-bold text-sm rounded-xl shadow-lg transition active:scale-95 cursor-pointer">
+        Save &amp; Apply Rota
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. Marketing Campaigns Modal -->
+  <div id="marketing-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm p-4 flex items-center justify-center opacity-0 pointer-events-none transition-all duration-200">
+    <div class="bg-slate-900 border border-sky-500/30 rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">📢</span>
+          <div>
+            <h3 class="font-fredoka text-base font-bold text-sky-400 leading-tight">Growth Marketing Board</h3>
+            <p class="text-[10px] text-slate-400">Demand Generation vs. Kitchen Capacity</p>
+          </div>
+        </div>
+        <button id="btn-close-marketing" class="text-slate-400 hover:text-white text-xl font-bold p-1">✕</button>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <!-- Campaign 1 -->
+        <div class="p-3 bg-slate-950 border border-slate-800 rounded-2xl flex justify-between items-center gap-2">
+          <div>
+            <div class="font-bold text-slate-200">📄 Local Flyers</div>
+            <div class="text-[10px] text-slate-400">+25% Footfall · 45s Duration</div>
+          </div>
+          <button id="btn-launch-flyers" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 active:scale-95 text-white font-fredoka font-bold rounded-xl text-xs shadow">
+            Run ($15)
+          </button>
+        </div>
+
+        <!-- Campaign 2 -->
+        <div class="p-3 bg-slate-950 border border-slate-800 rounded-2xl flex justify-between items-center gap-2">
+          <div>
+            <div class="font-bold text-slate-200">📱 Social Media Blitz</div>
+            <div class="text-[10px] text-slate-400">+75% Crowd Surge · +15% Tips · 30s</div>
+          </div>
+          <button id="btn-launch-social" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-fredoka font-bold rounded-xl text-xs shadow">
+            Run ($40)
+          </button>
+        </div>
+
+        <!-- Campaign 3 -->
+        <div class="p-3 bg-slate-950 border border-slate-800 rounded-2xl flex justify-between items-center gap-2">
+          <div>
+            <div class="font-bold text-slate-200">🏷️ 2-for-1 Promo Coupon</div>
+            <div class="text-[10px] text-slate-400">+120% Traffic · Price drops to $11 · 45s</div>
+          </div>
+          <button id="btn-launch-coupon" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 active:scale-95 text-slate-950 font-fredoka font-bold rounded-xl text-xs shadow">
+            Run ($10)
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-sky-950/20 border border-sky-500/20 rounded-xl p-2.5 text-[11px] text-sky-300 leading-tight">
+        <b>⚠️ The Marketing Trap:</b> If your oven and delivery pipeline are too slow, surplus ad traffic will storm out angry. Ensure production is ready before running ads!
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Financial Income Statement Modal -->
+  <div id="pl-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm p-4 flex items-center justify-center">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm p-5 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🧾</span>
+          <div>
+            <h3 class="font-fredoka text-base font-bold text-amber-400 leading-tight">Live P&amp;L Statement</h3>
+            <p class="text-[10px] text-slate-400">Unit Economics &amp; Operating Margins</p>
+          </div>
+        </div>
+        <button id="btn-close-pl" class="text-slate-400 hover:text-white text-xl font-bold p-1">✕</button>
+      </div>
+
+      <div class="bg-slate-950 rounded-2xl p-3 border border-slate-800/80 space-y-2 text-xs">
+        <div class="flex justify-between items-center text-slate-300">
+          <span>Gross Revenue (<span id="pl-sold-count">0</span> pies):</span>
+          <span id="pl-rev" class="font-fredoka font-bold text-emerald-400">+$0.00</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-400">
+          <span>COGS (Food &amp; Drinks):</span>
+          <span id="pl-cogs" class="font-fredoka font-semibold text-rose-400">-$0.00</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-400">
+          <span>Card Interchange Fees (2.5%):</span>
+          <span id="pl-fees" class="font-fredoka font-semibold text-rose-400">-$0.00</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-400">
+          <span>Staff Payroll (<span id="pl-staff-count">0</span> employees):</span>
+          <span id="pl-wages" class="font-fredoka font-semibold text-rose-400">-$0.00</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-400">
+          <span>Cheese Spoilage Waste Write-offs:</span>
+          <span id="pl-waste" class="font-fredoka font-semibold text-rose-400">-$0.00</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-400">
+          <span>Bank Debt Interest Expense (8%/day):</span>
+          <span id="pl-debt-interest" class="font-fredoka font-semibold text-rose-400">-$0.00</span>
+        </div>
+        <div class="flex justify-between items-center text-slate-400 pt-1 border-t border-slate-800/60">
+          <span>Labor Cost Ratio (Benchmark 25–35%):</span>
+          <span id="pl-labor-ratio" class="font-mono font-bold text-slate-200">0.0%</span>
+        </div>
+        <div class="flex justify-between items-center pt-2 border-t-2 border-slate-800 text-sm font-bold">
+          <span class="text-amber-300">Net Operating Profit:</span>
+          <span id="pl-net" class="font-fredoka text-base text-emerald-400">+$0.00</span>
+        </div>
+      </div>
+
+      <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5 text-[11px] text-amber-300 leading-tight">
+        <b>💡 Educational Takeaway: High-Margin Upsells &amp; Operating Leverage</b>
+        When you run everything manually, throughput is capped by your physical attention. Hiring staff creates fixed payroll, while terrace dine-in seating unlocks 82% margin beverage sales!
+      </div>
+
+      <button id="btn-confirm-pl" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-fredoka font-bold text-sm rounded-xl shadow-lg transition active:scale-95">
+        Resume Operations
+      </button>
+    </div>
+  </div>
+
+  <!-- Modular Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/scene.js"></script>
+  <script src="js/characters.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

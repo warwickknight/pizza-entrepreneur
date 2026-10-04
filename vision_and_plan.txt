@@ -1,0 +1,127 @@
+### Game Concept: *Pizza Tycoon 3D (Stall to Slice)*
+
+**Pizza Tycoon 3D** is a mobile-first, arcade-idle management game built for the web that translates tactile restaurant mechanics—walking, stacking, baking, and serving—into an educational simulation of real-world business operations, microeconomics, and entrepreneurship.
+
+```
+       [ Customer Arrives ]
+                 │
+                 ▼
+       [ Take Order at Counter ]  ── (Chit sent to Kitchen)
+                 │
+                 ▼
+      [ Prep & Fire in Stone Oven ]
+                 │
+                 ▼
+    [ Box Pizza & Stack on Head ]
+                 │
+                 ▼
+     [ Serve & Contactless Checkout ] ── (Card Fee / Net Revenue)
+                 │
+                 ▼
+    [ Reinvest Capital into Payroll & Capacity ]
+
+```
+
+#### Core Design Pillars
+
+* **Tactile Arcade-Idle Loop:** Movement feels physical and immediate via a dynamic floating touch joystick (or WASD). Players manage tangible constraints: carry limits, walking distances, and box-stack wobble physics.
+
+
+* **Realistic Business Simulation (No Arcade Clichés):** Cash does not float mysteriously on the floor. Customers pay at a contactless POS terminal (subject to 2.5% merchant transaction fees) or into a till. Financial statements track Gross Revenue, Cost of Goods Sold (COGS), card interchange fees, and payroll.
+* **Theory of Constraints & Operations:** Players physically experience production bottlenecks. Increasing marketing or counter speed causes a backlog if the oven cannot bake fast enough; upgrading the oven creates excess inventory if front-of-house logistics cannot deliver it.
+* **Operating Leverage & Automation:** Moving from solo founder-operator (zero payroll, hard personal ceiling on revenue) to managing hired employees (fixed overhead, higher throughput, passive operating profits).
+* **Ultralight Web Tech Stack:** Built using pure JavaScript, Three.js (low-poly isometric WebGL), and procedural Web Audio API. Requires zero external asset downloads, keeping initial load times under 1 MB.
+
+---
+
+### Current Prototype State (The Baseline)
+
+The current build (`pizza_tycoon_3d.html`) includes:
+
+* **Environment:** Open-air cobblestone market patio with an active stone pizza oven, hearth fire glow, prep table with rolling pin, order ticket rail, boxed pickup table, counter, and street curb.
+* **Manual Operational Pipeline:** Order taking $\rightarrow$ interactive stone oven baking with progress radial $\rightarrow$ finished box stacking $\rightarrow$ counter handover.
+* **Payment Processing:** Realistic card reader beeps and cash till audio, with visual deduction of card processing interchange fees.
+* **Staff Automation:** Labeled step-on hiring pads for **Chef ($45)** (automates cooking) and **Server ($60)** (automates order taking and delivery), complete with debounced shortfall alerts.
+* **Financial Reporting:** Real-time P&L modal calculating Gross Revenue, COGS, Fees, Payroll, and Net Operating Margin.
+
+---
+
+### Development Roadmap
+
+```
+PHASE 1 ──────► PHASE 2 ──────► PHASE 3 ──────► PHASE 4 ──────► PHASE 5
+Stall Polish    Supply Chain    Work-Life       Venue Upgrades  PWA & Mobile
+& Persistence   & Menu Design   & Dilemmas      (Truck to Shop) Optimization
+
+```
+
+#### Phase 1: Stall Polish, Feedback & Persistence
+
+* **Data Persistence:** Implement `localStorage` auto-saving for capital, staff statuses, lifetime stats, and inventory.
+* **Visual Polish & Character Animation:** Add simple limb swing oscillations, dough toss meshes during prep, and steam particle emitters rising from the oven chimney.
+* **Customer Variety:** Introduce 3 distinct customer archetypes with different patience timers and order sizes (e.g., *Impatient Commuter*, *Bulk Family Order*, *Regular*).
+* **Haptic & Visual Feedback:** Integrate the Web Vibration API (`navigator.vibrate`) for tactile clicks during card swipes, box pickups, and upgrade completions.
+
+#### Phase 2: Supply Chain, Recipes & Pricing Elasticity
+
+* **Inventory & Bulk Purchasing:**
+* Separate dough, tomato sauce, and mozzarella into consumable raw inventory.
+* Add a stockroom pad where players order ingredient restocks: choose between *Small Daily Batches* (high per-unit COGS) vs. *Wholesale Pallets* (low unit COGS, requires upfront liquidity).
+
+
+* **Dynamic Pricing Engine:**
+* Introduce a menu pricing slider ($10 to $26 per pie).
+* Simulate demand elasticity: underpricing causes long queues that exceed staff capacity; overpricing shrinks foot traffic but maximizes per-unit gross margins.
+
+
+* **Spoilage & Working Capital Risk:** Leaving perishable cheese unmanaged overnight or over-ordering before rainstorms introduces waste write-offs to the P&L statement.
+
+#### Phase 3: Work-Life Balance & Founder Dilemmas
+
+* **Energy & Burnout Meter:**
+* Working continuous shifts drains the founder's stamina bar, slowing walk speed and increasing order mistakes.
+* Taking breaks or fully delegating shifts to hired staff restores founder energy.
+
+
+* **Family & Personal Life Tracker:**
+* Introduce an off-shift *Personal Life / Morale* meter.
+* End-of-shift dilemma events with branching financial and emotional trade-offs:
+* *Example:* "Your daughter's school play is tonight during peak dinner rush. Do you close early (-$120 revenue, +20 family morale) or stay open to pay supplier debts (+revenue, -family morale)?"
+
+
+
+
+* **Bank Loans & Debt Servicing:** Provide early-stage micro-loans ($200 at 8% daily interest) for early hires, teaching debt service coverage and interest risk.
+
+#### Phase 4: Venue Progression (Stall $\rightarrow$ Food Truck $\rightarrow$ Pizzeria)
+
+* **Venue Transition Mechanics:**
+* Reaching capital and milestone targets triggers full-scene upgrades with cinematic transitions.
+
+
+* **Tier 2: The Mobile Food Truck:**
+* Relocate to beach/festival spots with fluctuating rush hours.
+* Add a vehicle drive-up lane (as seen in mobile arcade idlers) where parked cars make high-volume bulk takeaway orders.
+
+
+* Introduce maintenance overhead: engine breakdowns, generator gas costs, and street permit fees.
+
+
+* **Tier 3: Brick-and-Mortar Pizzeria:**
+* Indoor dining tables, a dedicated washing station (dirty plates mechanic), and delivery moped drivers.
+* Multi-station kitchen: dual stone ovens, separate cold-prep line, and a manager's back office for business analytics.
+
+
+
+#### Phase 5: Production Deployment & Mobile Distribution
+
+* **Progressive Web App (PWA):**
+* Add a Web App Manifest and Service Worker for full-screen, offline-capable, app-like installation on Android and iOS homescreens.
+
+
+* **Performance & Asset Budget:**
+* Keep geometry batched (`InstancedMesh` for customer crowds and multi-box stacks) to maintain a locked 60 FPS on lower-tier mobile hardware.
+
+
+* **Educational Export:**
+* Add an end-of-game summary report breaking down the player's cumulative metrics: Return on Investment (ROI), Total Labor Efficiency, Debt Management Score, and Work-Life Equilibrium.
